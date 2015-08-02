@@ -1,0 +1,68 @@
+{
+  "name": "mercury",
+  "version": "0.0.1",
+  "description": "Fast GraphQL Server for MongoDB",
+  "main": "index.js",
+  "scripts": {
+    "start": "node --harmony server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/will-weiss/mercury"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/will-weiss/mercury/issues"
+  },
+  "homepage": "https://github.com/will-weiss/mercury",
+  "dependencies": {
+    "LaterList": "git://github.com/will-weiss/LaterList.git#master",
+    "babel": "5.6.14",
+    "babel-core": "5.6.15",
+    "bluebird": "2.9.21",
+    "body-parser": "1.9.2",
+    "busboy": "0.2.9",
+    "coffee-script": "1.9.0",
+    "connect-mongo": "0.8.1",
+    "connect-multiparty": "1.2.5",
+    "cookie-parser": "1.3.3",
+    "debug": "2.2.0",
+    "deep-extend": "0.3.2",
+    "deepcopy": "0.3.3",
+    "expand-range": "0.1.1",
+    "expect": "1.6.0",
+    "express": "4.10.1",
+    "express-session": "1.9.1",
+    "graphql": "0.1.6",
+    "hat": "0.0.3",
+    "i": "^0.3.3",
+    "lodash": "3.9.3",
+    "mc": "1.0.6",
+    "mocha": "2.1.0",
+    "moment": "2.8.3",
+    "mongodb": "1.4.19",
+    "mongoose": "4.0.6",
+    "mongoose-q": "0.0.13",
+    "q": "1.0.1",
+    "require-all": "1.0.0",
+    "swig": "1.4.2",
+    "tough-cookie": "1.1.0",
+    "vers": "0.1.0",
+    "winston": "0.8.1"
+  },
+  "devDependencies": {
+    "browserify": "^9.0.3",
+    "chai": "^2.0.0",
+    "chai-as-promised": "^4.2.0",
+    "gulp": "^3.8.11",
+    "gulp-istanbul": "^0.6.0",
+    "gulp-istanbul-enforcer": "^1.0.3",
+    "gulp-mocha": "^2.0.0",
+    "gulp-rename": "^1.2.0",
+    "gulp-uglify": "^1.1.0",
+    "istanbul": "^0.3.8",
+    "mocha": "^2.1.0",
+    "vinyl-transform": "^1.0.0"
+  }
+}
