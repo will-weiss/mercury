@@ -20,8 +20,7 @@ class MongooseModel extends Model
 
   getParentIds: ->
     _.chain(@model.schema.tree)
-      .pairs()
-      .map ([path, field]) -> if field.ref then [field.ref, path]
+      .map (field, path) -> if field.ref then [field.ref, path]
       .compact()
       .object()
       .value()
