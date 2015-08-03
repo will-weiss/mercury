@@ -4,7 +4,7 @@
   "description": "Fast GraphQL Server for MongoDB",
   "main": "index.js",
   "scripts": {
-    "start": "node --harmony server.js"
+    "start": "node --harmony index.js"
   },
   "repository": {
     "type": "git",

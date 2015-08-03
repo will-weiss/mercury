@@ -1,14 +1,19 @@
-{Promise} = require('./dependencies')
+{utils, Promise} = require('./dependencies')
 
 class Query
-  constructor: ->
+  constructor: (@batcher) ->
     @ids = []
     @deferreds = {}
-    setTimeout(@run.bind(@), @wait)
+    setTimeout(@run.bind(@), @batcher.wait)
+
+  resolveOne: (result) ->
+    deferred = @deferreds[result._id]
+    delete @deferreds[result._id]
+    deferred.resolve(result)
 
   run: ->
     @batcher.query = null
-    @getList(@ids)
+    @batcher.getList.call(@, @ids)
       .then        => deferred.resolve()   for id, deferred of @deferreds
       .catch (err) => deferred.reject(err) for id, deferred of @deferreds
 
@@ -20,20 +25,15 @@ class Query
 
 
 class Batcher
-  constructor: (getList, @wait = 0) ->
-    thisBatcher = @
+  constructor: (@wait = 0) ->
     @query = null
 
-    class BatchedQuery extends Query
-      batcher: thisBatcher
-      getList: getList
-      wait: wait
-
-    @Query = BatchedQuery
-
   by: (id) ->
-    @query ?= new this.Query(@)
+    @query ?= new Query(@)
     @query.by(id)
+
+
+utils.protoMustImplement(Batcher, 'getList')
 
 
 module.exports = Batcher

@@ -28,18 +28,18 @@ getFields = (model) ->
     .object()
     .value()
 
-# Convert a given collection with its modelCfg to an info object containing the GraphQL object type
-toGraphQlObjectTypeInfo = ([coll, modelCfg]) ->
-  {model} = modelCfg
+# Convert a given collection with its model to an info object containing the GraphQL object type
+toGraphQlObjectTypeInfo = ([name, model]) ->
+  {model} = model
   {modelName} = model
-  fields = getFields(model)
+  fields = model.getFields()
 
   objectType = GRAPH_QL_OBJECT_TYPES[modelName] = new GraphQLObjectType
     name: modelName
-    description: coll
+    description: name
     fields: => fields
 
-  return [coll, {objectType, fields, modelCfg}]
+  return [name, {objectType, fields, model}]
 
 # Get a resolve function for a given model
 getResolve = (modelResolveFn) -> allong.es.unary(modelResolveFn)
@@ -57,40 +57,40 @@ objectInfos = _.chain(relations)
   .object()
   .value()
 
-addChildResolves = ({parentColl, resolve, coll, objectType, modelCfg}) ->
+addChildResolves = ({parentColl, resolve, name, objectType, model}) ->
   {fields} = objectInfos[parentColl]
-  {prettyPlural} = modelCfg
+  {prettyPlural} = model
   fields[prettyPlural] =
     resolve: resolve
-    description: coll
+    description: name
     type: new GraphQLList(objectType)
 
-addParentResolves = ({childColl, resolve, coll, objectType, modelCfg}) ->
+addParentResolves = ({childColl, resolve, name, objectType, model}) ->
   {fields} = objectInfos[childColl]
-  {prettyName} = modelCfg
+  {prettyName} = model
   fields[prettyName] =
     resolve: resolve
-    description: coll
+    description: name
     type: objectType
 
 # Extend existing object infos with other fields
-extendObjectInfo = ({objectType, fields, modelCfg}, coll) ->
-  _.chain(modelCfg.findAsChildrenFns)
+extendObjectInfo = ({objectType, fields, model}, name) ->
+  _.chain(model.findAsChildrenFns)
     .pairs()
     .map ([parentColl, findAsChildrenFn]) ->
       resolve = getResolve(findAsChildrenFn)
       {parentColl, resolve}
     .forEach ({parentColl, resolve}) ->
-      addChildResolves({parentColl, resolve, coll, objectType, modelCfg})
+      addChildResolves({parentColl, resolve, name, objectType, model})
     .value()
 
-  _.chain(modelCfg.childChains)
+  _.chain(model.childChains)
     .keys()
     .map (childColl) ->
-      resolve = getResolve(modelCfg.findParent)
+      resolve = getResolve(model.findParent)
       {childColl, resolve}
     .forEach ({childColl, resolve}) ->
-      addParentResolves({childColl, resolve, coll, objectType, modelCfg})
+      addParentResolves({childColl, resolve, name, objectType, model})
     .value()
 
 _.chain(objectInfos).forEach(extendObjectInfo).value()

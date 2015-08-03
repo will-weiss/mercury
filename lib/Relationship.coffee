@@ -1,8 +1,8 @@
 {_} = require('./dependencies')
 
 class Relationship
-  constructor: (@from, @to, @links) ->
-    @links ?= [@to]
+  constructor: (@from, @to, links) ->
+    @links = links || [@to]
 
 
 class ChildRelationship extends Relationship
@@ -14,8 +14,7 @@ class ParentRelationship extends Relationship
 
   addAncestorRelationships: ->
     fromParents = @from.relationships.parent
-
-    newAncestorRelationships = _.chain(@to.relationships.parent)
+    _.chain(@to.relationships.parent)
       .map (parentAncestorRelationship, ancestorName) =>
         {to} = parentAncestorRelationship
         links = @links.concat(parentAncestorRelationship.links)
@@ -24,11 +23,10 @@ class ParentRelationship extends Relationship
         [ancestorName, ancestorRelationship]
       .compact()
       .object()
+      .thru (newAncestorRelationships) =>
+        _.extend(fromParents, newAncestorRelationships)
+        _.isEmpty(newAncestorRelationships)
       .value()
-
-    _.extend(fromParents, newAncestorRelationships)
-
-    _.isEmpty(newAncestorRelationships)
 
   addCorrespondingChildRelationship: ->
     links = _.chain([@from].concat(@links)).reverse().rest().value()

@@ -1,12 +1,4 @@
-process.env.TZ = 'UTC';
 require('coffee-script/register');
+// module.exports = require('./lib');
 
-// The global Promise object comes from bluebird
-// https://github.com/petkaantonov/bluebird
-global.Promise = require('bluebird').Promise;
-
-try {
-  require('./lib/boot')();
-} catch(err) {
-  console.log(err.stack);
-}
+require('./run')

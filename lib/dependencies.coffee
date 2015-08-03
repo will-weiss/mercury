@@ -2,47 +2,52 @@
 dependencies = module.exports
 
 # Dependencies listed in a non-circular resolution order.
-#
 dependencyList = [
+
   # node_modules
   'allong.es::allong'
   'bluebird::Promise'
-  'body-parser'
-  'cookie-parser'
-  'connect-mongo'
+  'body-parser::bodyParser'
+  'cookie-parser::cookieParser'
+  'connect-mongo::connectMongo'
   'express'
-  'express-session'
+  'express-session::expressSession'
   'fs'
   'graphql'
   'i'
   'LaterList'
   'lodash::_'
   'moment'
-  'vers'
+  'mongoose'
   'util'
+  'vers'
   'winston'
+
   # mercury
+  './defaults'
   './utils'
   './Caches'
   './Batcher'
+  './Driver'
   './Relationship'
-  './ModelPrototype'
+  './ModelProto'
   './Model'
-  './ModelContainer'
-  './mongo'
+  './ProtoContainer'
+  './Mongo'
   './graphQL'
   './Controller'
   './controllers'
   './Application'
 ]
 
-# Loads a dependency
+# Load a dependency
 loadOne = (dependency) ->
   [loc, name] = dependency.split('::')
   name ?= loc.split('/').pop()
   dependencies[name] = require(loc)
 
-# Loads all dependencies
+# Load all dependencies
 dependencies.load = ->
   delete dependencies.load
   dependencyList.forEach(loadOne)
+  return dependencies

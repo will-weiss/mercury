@@ -1,10 +1,33 @@
-{mongoose, cacheWrap} = require('../dependencies')
+{Model} = require('../dependencies')
 
-module.exports = (connection, modelName, schema, opts={}) ->
-  # addEncryptionHooks(schema)
-  if opts.isProduction
-    schema.pre "save", no_write
-    schema.pre "remove", no_write
-  model = connection.model(modelName, schema)
-  model.findCache = cacheWrap(modelName, model)
-  model
+class MongoModel extends Model
+
+  constructor: (@mongooseModel) ->
+    super
+
+  get: (key) -> @mongooseModel.get(key)
+
+  getId: -> @mongooseModel._id
+
+
+MongoModel.find = (query) ->
+  @MongooseModel.findQ(query)
+
+MongoModel.count = (query) ->
+  @MongooseModel.countQ(query)
+
+MongoModel.distinct = (field, query) ->
+  @MongooseModel.distinctQ(field, query)
+
+MongoModel.distinctIds = (query) ->
+  @MongooseModel.distinctQ('_id', query)
+
+MongoModel.formNextQuery = (parentId, ids) ->
+  query = {}
+  query[parentId] = {$in: ids}
+  query
+
+
+MongoModel.Batcher = require('./Batcher')
+
+module.exports = MongoModel

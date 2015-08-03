@@ -2,15 +2,13 @@
 
 
 class ProtoContainer
-  constructor: ->
+  constructor: (@app) ->
     @protos = {}
-    @models = {}
-    @caches = new Caches()
 
-  addPrototype: (Proto, name, args...) ->
+  addProto: (Proto, name, args...) ->
     if @protos[name]
       throw new Error("A prototype already exists named #{name}.")
-    cache = @cs.new(name)
+    cache = @app.caches.new(name)
     factoryArgs = [Proto, @protos, name, cache].concat(args)
     ProtoFactory = Proto.bind.apply(Proto, factoryArgs)
     @protos[name] = new ProtoFactory()
@@ -42,10 +40,9 @@ class ProtoContainer
     @buildAllChildRelationships(protos)
     @buildAllFindFns(protos)
 
-  buildModels: ->
+  buildAllModels: ->
     @buildAllProtos()
-    _.map @protos, (proto, name) => @models[name] = proto.toModel()
-    @models
+    _.forEach @protos, (proto, name) => @app.models[name] = proto.toModel()
 
 
 module.exports = ProtoContainer

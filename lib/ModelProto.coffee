@@ -1,21 +1,20 @@
-{_, i, Relationship, Model} = require('./dependencies')
+{_, i, Relationship, utils} = require('./dependencies')
 
 {pluralize} = i()
 
+class ModelProto
 
-class ModelPrototype
-
-  constructor: (@protos, @name, @cache, @opts={}) ->
-    @attachBatcher()
+  constructor: (@name, @cache, @opts={}) ->
+    _.extend(@, @Model.prototype)
     @attachNames()
     @attachInitialParents()
     @attachRelationshipConstructors()
     @parentIds = @getParentIds()
     @relationships = {child: {}, parent: {}}
-
-  attachBatcher: ->
-    _.defaults(@opts, {wait: 1})
-    @batcher = new this.Batcher(@, @opts.wait)
+    @findAsChildrenFns = {}
+    @findPriorParentFns = {}
+    @countAsChildrenFns = {}
+    @distinctAsChildrenFns = {}
 
   # Get how the model appears as a singular and a plural from the options. If
   # not specified, the model appears as a singular in the form given by
@@ -27,16 +26,16 @@ class ModelPrototype
     @appearsAsPlural ||= pluralize(@appearsAsSingular)
 
   attachRelationshipConstructors: ->
-    thisModel = @
+    thisProto = @
 
     class ParentRelationship extends Relationship.Parent
       constructor: (to, links) ->
-        super thisModel, to, links
+        super thisProto, to, links
 
 
     class ChildRelationship extends Relationship.Child
       constructor: (to, links) ->
-        super thisModel, to, links
+        super thisProto, to, links
 
 
     ParentRelationship.name = "#{@name}ParentRelationship"
@@ -45,9 +44,9 @@ class ModelPrototype
     @ParentRelationship = ParentRelationship
     @ChildRelationship = ChildRelationship
 
-  initParents: ->
+  initParents: (protos) ->
     _.keys(@parentIds).forEach (parentName) =>
-      parentRelationship = new this.ParentRelationship(@protos[parentName])
+      parentRelationship = new this.ParentRelationship(protos[parentName])
       @relationships.parent[parentName] = parentRelationship
 
   # Adds one level of ancestors for a model configuration
@@ -63,10 +62,27 @@ class ModelPrototype
       parentRelationship.addCorrespondingChildRelationship()
 
   toModel: ->
-    class SpecificModel extends Model
-    _.extend(SpecificModel.prototype, @)
-    SpecificModel.name = "#{@name}Model"
-    SpecificModel
+    class Model extends this.constructor.Model
+    Model.name = "#{@name}Model"
+    _.extend(Model.prototype, @)
+    @Model = Model
 
+  buildAllFindFns: ->
+    _.map @relationships.parent, (parentRelationship, parentName) =>
+      [parent, ancestors...] = parentRelationship.links
+      firstQueryFn =
 
-module.exports = ModelPrototype
+        genFirstQueryFn(parent)
+      otherQueryFns = ancestors.map(genNextQueryFn)
+      childQueryFn = genChildQueryFn(firstQueryFn, otherQueryFns)
+      @findAsChildrenFns[parentName] = genFindAsChildren(childQueryFn, @)
+      @countAsChildrenFns[parentName] = genCountAsChildren(childQueryFn, @)
+      @distinctAsChildrenFns[parentName] = genDistinctAsChildren(childQueryFn, @)
+
+utils.ctorMustImplement(ModelProto, 'Model')
+
+utils.protoMustImplement(
+  ModelProto, 'getAppearsAs', 'getParentIds', 'getFields'
+)
+
+module.exports = ModelProto
