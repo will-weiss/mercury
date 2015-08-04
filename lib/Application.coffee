@@ -7,7 +7,7 @@ class Application
     @express = express()
     @drivers = []
     @caches = new Caches()
-    @Models = {}
+    @models = {}
 
   addDriver: (type, opts) ->
     driver = new Driver.drivers[type](@, opts)
@@ -25,8 +25,8 @@ class Application
     LaterList.Relay.from(@drivers)
       .forEach (driver) => driver.connect()
       .then =>
-        buildModels(@Models)
-        console.log @Models
+        buildModels(@models)
+        console.log @models
 
 
 module.exports = Application

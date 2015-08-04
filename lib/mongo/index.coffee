@@ -1,6 +1,8 @@
 {mongoose, Promise, Driver} = require('../dependencies')
 
 class MongoDriver extends Driver
+  Model: require('./Model')
+
   constructor: (app, opts) ->
     super app, opts
     @mongoose = new mongoose.Mongoose()
@@ -29,6 +31,5 @@ class MongoDriver extends Driver
     Model.MongooseModel = @mongoose.model(name, schema)
     Model
 
-MongoDriver.Model = require('./Model')
 
 module.exports = Driver.drivers.Mongo = MongoDriver

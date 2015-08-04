@@ -5,8 +5,7 @@ typeMap = require('./typeMap')
 class MongoModel extends Model
 
   Batcher: require('./Batcher')
-
-  constructor: (@MongooseModel) ->
+  ModelInstance: require('./ModelInstance')
 
   genFirstQueryFn: (parentId) ->
     ->
@@ -53,6 +52,8 @@ class MongoModel extends Model
       .object()
       .value()
 
+  createInstance: (doc, fields, skipId) ->
+    new this.ModelInstance(@, doc, fields, skipId)
 
 
 module.exports = MongoModel

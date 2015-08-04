@@ -6,7 +6,7 @@ class Driver
     _.extend(@, opts)
     @index = @app.drivers.length
     @name ||= "#{@type} driver #{@index + 1}"
-    @Models = {}
+    @models = {}
 
   onConnectionSuccess: ->
     console.log("#{@name} connected.")
@@ -19,7 +19,7 @@ class Driver
     console.log("#{@name} connection closed.")
 
   model: (name) ->
-    @app.Models[name] = @Models[name] = @constructor.Model.extend(@app, name)
+    @app.models[name] = @models[name] = new this.Model(@app, name)
 
 
 Driver.drivers = {}

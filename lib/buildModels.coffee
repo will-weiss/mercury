@@ -2,19 +2,19 @@
 
 {pluralize} = i()
 
-attachNames = (Models) ->
-  _.forEach Models, (Model) ->
+attachNames = (models) ->
+  _.forEach models, (Model) ->
     _.extend(Model, _.pick(Model.opts, 'appearsAsSingular', 'appearsAsPlural'))
     # Get how the model appears as a singular if not otherwise specified.
     Model.appearsAsSingular ||= Model.getAppearsAs()
     # Get how the model appears as a plural if not otherwise specified.
     Model.appearsAsPlural ||= pluralize(Model.appearsAsSingular)
 
-buildParents = (Models) ->
-  _.forEach Models, (Model) ->
+buildParents = (models) ->
+  _.forEach models, (Model) ->
     _.extend(Model.parentIds, Model.getParentIds())
     _.keys(Model.parentIds).forEach (parentName) ->
-      Parent = Models[parentName]
+      Parent = models[parentName]
       return unless Parent
       parentRelationship = new Relationship.Parent(Model, Parent)
       Model.relationships.parent[parentName] = parentRelationship
@@ -24,21 +24,21 @@ addAncestorsForModel = (Model) ->
     .every (parentRelationship) -> parentRelationship.addAncestorRelationships()
     .value()
 
-addAncestors = (Models) ->
-  _.chain(Models).map(addAncestorsForModel).every().value()
+addAncestors = (models) ->
+  _.chain(models).map(addAncestorsForModel).every().value()
 
-buildAncestors = (Models) ->
+buildAncestors = (models) ->
   allRelationshipsBuilt = false
   until allRelationshipsBuilt
-    allRelationshipsBuilt = addAncestors(Models)
+    allRelationshipsBuilt = addAncestors(models)
 
-buildChildren = (Models) ->
-  _.forEach Models, (Model) ->
+buildChildren = (models) ->
+  _.forEach models, (Model) ->
     _.forEach Model.relationships.parent, (parentRelationship) ->
       parentRelationship.addCorrespondingChildRelationship()
 
-buildFindFns = (Models) ->
-  _.forEach Models, (Model) ->
+buildFindFns = (models) ->
+  _.forEach models, (Model) ->
     _.forEach Model.relationships.parent, (parentRelationship, parentName) ->
       parentId = Model.parentIds[parentName]
       [firstLink, otherLinks...] = parentRelationship.links
@@ -60,10 +60,10 @@ buildFindFns = (Models) ->
         query
 
 
-buildModels = (Models) ->
-  attachNames(Models)
-  buildParents(Models)
-  buildAncestors(Models)
-  buildChildren(Models)
+buildModels = (models) ->
+  attachNames(models)
+  buildParents(models)
+  buildAncestors(models)
+  buildChildren(models)
 
 module.exports = buildModels

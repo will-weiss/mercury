@@ -3,8 +3,15 @@
 {accumQuery, reduceQueries, ctorMustImplement, protoMustImplement} = utils
 
 class Model
-  constructor: ->
+  constructor: (@app, @name, opts) ->
     @batcher = new this.Batcher(@)
+    @cache = @app.caches.new(@name)
+    @findAsChildrenFns = {}
+    @findPriorParentFns = {}
+    @countAsChildrenFns = {}
+    @distinctAsChildrenFns = {}
+    @parentIds = {}
+    @relationships = {child: {}, parent: {}}
 
   childQueryFn: (parentModel, queryFns) ->
     reduceQueries(@getFirstQuery(parentModel), queryFns)
@@ -44,27 +51,15 @@ class Model
     @findById(childModel.get(parentId))
 
 
-extend: (app, name) ->
-  ThisModel = @
-  class Model extends ThisModel
-  Model.registeredAs = name
-  Model.cache = app.caches.new(Model, name)
-  Model.batcher = new ThisModel.Batcher(Model)
-  Model.findAsChildrenFns = {}
-  Model.findPriorParentFns = {}
-  Model.countAsChildrenFns = {}
-  Model.distinctAsChildrenFns = {}
-  Model.parentIds = {}
-  Model.relationships = {child: {}, parent: {}}
-  Model
 
-
-ctorMustImplement(
-  Model, 'Batcher', 'count', 'distinct', 'distinctIds', 'find', 'formNextQuery',
-    'getAppearsAs', 'getParentIds', 'getFields'
+protoMustImplement(
+  Model, 'Batcher', 'ModelInstance', 'count', 'distinct', 'distinctIds', 'find',
+    'formNextQuery', 'getAppearsAs', 'getParentIds', 'getFields',
+    'createInstance'
 )
 
-protoMustImplement(Model, 'get', 'getId', 'getQuery')
+
+
 
 
 module.exports = Model
