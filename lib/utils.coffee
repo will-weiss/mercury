@@ -1,4 +1,4 @@
-{LaterList, requireAll} = require('./dependencies')
+{LaterList} = require('./dependencies')
 
 {Flood, Relay} = LaterList
 
@@ -24,9 +24,5 @@ protoMustImplement = (Ctor, fnNames...) ->
     Ctor[fnName] = ->
       throw new Error("#{Ctor.name}.prototype must implement #{fnName}.")
 
-filter = /(.+)\.coffee$/
-
-requireAll = (dirname) -> requireAll({dirname, filter})
-
 module.exports = { toFlood, reduceQueries, accumQuery , ctorMustImplement
-                 , protoMustImplement, requireAll }
+                 , protoMustImplement }
