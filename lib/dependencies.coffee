@@ -33,6 +33,7 @@ dependencyList = [
   './Relationship'
   './buildModels'
   './Model'
+  './ModelInstance'
   './Mongo'
   './graphQL'
   './Controller'
