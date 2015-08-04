@@ -26,8 +26,8 @@ class MongoDriver extends Driver
 
     @connected.promise
 
-  model: (name, schema) ->
-    Model = super name
+  model: (name, schema, opts) ->
+    Model = super name, opts
     Model.MongooseModel = @mongoose.model(name, schema)
     Model
 

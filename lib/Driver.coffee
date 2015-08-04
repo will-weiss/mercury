@@ -18,8 +18,8 @@ class Driver
   onConnectionClose: ->
     console.log("#{@name} connection closed.")
 
-  model: (name) ->
-    @app.models[name] = @models[name] = new this.Model(@app, name)
+  model: (name, opts) ->
+    @app.models[name] = @models[name] = new this.Model(@app, name, opts)
 
 
 Driver.drivers = {}

@@ -1,9 +1,6 @@
 {_, ModelInstance} = require('../dependencies')
 
 class MongoModelInstance extends ModelInstance
-  constructor: (@MongoModel, doc, fields, skipId) ->
-    {MongooseModel} = @MongoModel
-    @mongooseModel = new MongooseModel(doc, fields, skipId)
 
   get: (key) -> @mongooseModel.get(key)
 
@@ -11,7 +8,7 @@ class MongoModelInstance extends ModelInstance
 
   getId: -> @mongooseModel._id
 
-  firstQueryFn = (parentId) ->
+  genFirstQuery = (parentId) ->
     query = {}
     query[parentId] = @getId()
     query

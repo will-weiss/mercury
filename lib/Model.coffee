@@ -1,11 +1,20 @@
-{_, utils} = require('./dependencies')
+{_, i, utils} = require('./dependencies')
+
+{pluralize} = i()
 
 {accumQuery, reduceQueries, ctorMustImplement, protoMustImplement} = utils
 
 class Model
-  constructor: (@app, @name, opts) ->
+  constructor: (@app, @name, @opts={}) ->
+
+  init: ->
     @batcher = new this.Batcher(@)
     @cache = @app.caches.new(@name)
+    {@appearsAsSingular, @appearsAsPlural} = @opts
+    # Get how the model appears as a singular if not otherwise specified.
+    @appearsAsSingular ||= @getAppearsAs()
+    # Get how the model appears as a plural if not otherwise specified.
+    @appearsAsPlural ||= pluralize(@appearsAsSingular)
     @findAsChildrenFns = {}
     @findPriorParentFns = {}
     @countAsChildrenFns = {}
@@ -13,12 +22,12 @@ class Model
     @parentIds = {}
     @relationships = {child: {}, parent: {}}
 
-  childQueryFn: (parentModel, queryFns) ->
-    reduceQueries(@getFirstQuery(parentModel), queryFns)
+  childQueryFn: (parentInstance, queryFns) ->
+    reduceQueries(@getFirstQuery(parentInstance), queryFns)
 
   genChildQueryFn: (firstQueryFn, queryFns) ->
-    (parentModel) ->
-      firstQuery = firstQueryFn(parentModel)
+    (parentInstance) ->
+      firstQuery = firstQueryFn(parentInstance)
       reduceQueries(firstQuery, queryFns)
 
   findById: (id) ->
@@ -28,18 +37,18 @@ class Model
     cache.set(id, fetched)
     fetched
 
-  findAsChildren: (childQueryFn, parentModel, queryExt = {}) ->
-    childQueryFn(parentModel).then (query) =>
+  findAsChildren: (childQueryFn, parentInstance, queryExt = {}) ->
+    childQueryFn(parentInstance).then (query) =>
       _.extend(query, queryExt)
       @find(query)
 
-  countAsChildren: (childQueryFn, parentModel, queryExt = {}) ->
-    childQueryFn(parentModel).then (query) =>
+  countAsChildren: (childQueryFn, parentInstance, queryExt = {}) ->
+    childQueryFn(parentInstance).then (query) =>
       _.extend(query, queryExt)
       @count(query)
 
-  distinctAsChildren: (childQueryFn, parentModel, field, queryExt) ->
-    childQueryFn(parentModel).then (query) =>
+  distinctAsChildren: (childQueryFn, parentInstance, field, queryExt) ->
+    childQueryFn(parentInstance).then (query) =>
       _.extend(query, queryExt)
       @distinct(field, query)
 
@@ -47,15 +56,17 @@ class Model
     (priorQuery) ->
       @distinctIds(priorQuery).then(@formNextQuery.bind(@))
 
-  findAsParent: (parentId, childModel) ->
-    @findById(childModel.get(parentId))
+  findAsParent: (parentId, childInstance) ->
+    @findById(childInstance.get(parentId))
+
+  createInstance: ->
+    new this.ModelInstance(@)
 
 
 
 protoMustImplement(
   Model, 'Batcher', 'ModelInstance', 'count', 'distinct', 'distinctIds', 'find',
-    'formNextQuery', 'getAppearsAs', 'getParentIds', 'getFields',
-    'createInstance'
+    'formNextQuery', 'getAppearsAs', 'getParentIds', 'getFields'
 )
 
 

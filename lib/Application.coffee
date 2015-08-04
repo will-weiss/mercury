@@ -1,5 +1,5 @@
 { _, bodyParser, cookieParser, express, expressSession, LaterList, defaults
-, buildModels, ProtoContainer, Driver, Caches } = require('./dependencies')
+, buildAncestors, buildModelFunctions, Driver, Caches } = require('./dependencies')
 
 class Application
   constructor: (@opts) ->
@@ -25,7 +25,9 @@ class Application
     LaterList.Relay.from(@drivers)
       .forEach (driver) => driver.connect()
       .then =>
-        buildModels(@models)
+        model.init() for model in _.values(@models)
+        buildAncestors(@models)
+        buildModelFunctions(@models)
         console.log @models
 
 

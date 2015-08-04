@@ -7,12 +7,6 @@ class MongoModel extends Model
   Batcher: require('./Batcher')
   ModelInstance: require('./ModelInstance')
 
-  genFirstQueryFn: (parentId) ->
-    ->
-      query = {}
-      query[parentId] = @getId()
-      query
-
   genFormNextQuery: (parentId) ->
     (ids) ->
       query = {}
@@ -43,9 +37,9 @@ class MongoModel extends Model
   getFields: ->
     _.chain(@MongooseModel.schema.paths)
       .map ({instance, path}) ->
-        # TODO
-        return unless instance of typeMap
         type = typeMap[instance]
+        # TODO
+        return unless type
         description = path
         [path, {type, description}]
       .compact()
@@ -53,7 +47,9 @@ class MongoModel extends Model
       .value()
 
   createInstance: (doc, fields, skipId) ->
-    new this.ModelInstance(@, doc, fields, skipId)
+    modelInstance = super
+    modelInstance.mongooseModel = new this.MongooseModel(doc, fields, skipId)
+    modelInstance
 
 
 module.exports = MongoModel
