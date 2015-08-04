@@ -4,10 +4,9 @@ class Driver
   constructor: (@app, opts) ->
     _.extend(opts, defaults.driver)
     _.extend(@, opts)
-    {drivers} = @app
-    @index = drivers.length
+    @index = @app.drivers.length
     @name ||= "#{@type} driver #{@index + 1}"
-    drivers.push(@)
+    @Models = {}
 
   onConnectionSuccess: ->
     console.log("#{@name} connected.")
@@ -19,15 +18,13 @@ class Driver
   onConnectionClose: ->
     console.log("#{@name} connection closed.")
 
-  addProto: (name, args...) ->
-    {ModelProto} = @constructor
-    factoryArgs = [ModelProto, name].concat(args)
-    ProtoFactory = ModelProto.bind.apply(factoryArgs)
-    @app.protos[name] = new ProtoFactory()
+  model: (name) ->
+    @app.Models[name] = @Models[name] = @constructor.Model.extend(@app, name)
+
 
 Driver.drivers = {}
 
-utils.ctorMustImplement(Driver, 'ModelProto')
+utils.ctorMustImplement(Driver, 'Model')
 utils.protoMustImplement(Driver, 'connect')
 
 module.exports = Driver

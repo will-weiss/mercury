@@ -19,7 +19,7 @@ class ParentRelationship extends Relationship
         {to} = parentAncestorRelationship
         links = @links.concat(parentAncestorRelationship.links)
         return if links.length >= fromParents[ancestorName]?.links?.length
-        ancestorRelationship = new this.from.ParentRelationship(to, links)
+        ancestorRelationship = new ParentRelationship(@from, to, links)
         [ancestorName, ancestorRelationship]
       .compact()
       .object()
@@ -30,7 +30,7 @@ class ParentRelationship extends Relationship
 
   addCorrespondingChildRelationship: ->
     links = _.chain([@from].concat(@links)).reverse().rest().value()
-    childRelationship = new this.to.ChildRelationship(@from, links)
+    childRelationship = new ChildRelationship(@to, @from, links)
     @to.relationships.child[@from.name] = childRelationship
 
 

@@ -1,4 +1,3 @@
 require('coffee-script/register');
-// module.exports = require('./lib');
+module.exports = require('./lib');
 
-require('./run')

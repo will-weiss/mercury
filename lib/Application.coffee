@@ -1,5 +1,5 @@
-{ _, bodyParser, cookieParser, express, expressSession, defaults
-, ProtoContainer, Driver, Caches } = require('./dependencies')
+{ _, bodyParser, cookieParser, express, expressSession, LaterList, defaults
+, buildModels, ProtoContainer, Driver, Caches } = require('./dependencies')
 
 class Application
   constructor: (@opts) ->
@@ -7,11 +7,12 @@ class Application
     @express = express()
     @drivers = []
     @caches = new Caches()
-    @protoContainer = new ProtoContainer(@)
-    @models = {}
+    @Models = {}
 
   addDriver: (type, opts) ->
-    new Driver.drivers[type](@, opts)
+    driver = new Driver.drivers[type](@, opts)
+    @drivers.push(driver)
+    driver
 
   configure: ->
     @express.set('port', @opts.port)
@@ -21,6 +22,11 @@ class Application
     @express.use(cookieParser())
 
   run: ->
+    LaterList.Relay.from(@drivers)
+      .forEach (driver) => driver.connect()
+      .then =>
+        buildModels(@Models)
+        console.log @Models
 
 
 module.exports = Application

@@ -1,4 +1,4 @@
-# This module exports the dependencies of mercury
+# This module exports the dependencies of mercury.
 dependencies = module.exports
 
 # Dependencies listed in a non-circular resolution order.
@@ -19,6 +19,7 @@ dependencyList = [
   'lodash::_'
   'moment'
   'mongoose'
+  'require-all::requireAll'
   'util'
   'vers'
   'winston'
@@ -30,9 +31,8 @@ dependencyList = [
   './Batcher'
   './Driver'
   './Relationship'
-  './ModelProto'
+  './buildModels'
   './Model'
-  './ProtoContainer'
   './Mongo'
   './graphQL'
   './Controller'

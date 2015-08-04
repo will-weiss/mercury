@@ -1,27 +1,34 @@
-{mongoose, Driver} = require('../dependencies')
+{mongoose, Promise, Driver} = require('../dependencies')
 
 class MongoDriver extends Driver
+  constructor: (app, opts) ->
+    super app, opts
+    @mongoose = new mongoose.Mongoose()
+    @mongoose = mongoose
+    Promise.promisifyAll(@mongoose.Model)
+    Promise.promisifyAll(@mongoose.Model.prototype)
+    @connected = Promise.pending()
 
   connect: ->
-    return new Promise (resolve, reject) =>
-      conn = @connection = mongoose.createConnection(@connectionString)
+    @connection = conn = @mongoose.createConnection(@connectionString)
 
-      conn.on 'connected', =>
-        @onConnectionSuccess()
-        resolve(conn)
+    conn.on 'connected', =>
+      @onConnectionSuccess()
+      @connected.resolve()
 
-      conn.on 'error', (err) =>
-        @onConnectionError(err)
-        reject(err)
+    conn.on 'error', (err) =>
+      @onConnectionError(err)
+      @connected.reject(err)
 
-      conn.on('close', @onConnectionClose.bind(@))
+    conn.on('close', @onConnectionClose.bind(@))
+
+    @connected.promise
 
   model: (name, schema) ->
-    mongooseModel = @connection.model(name, schema)
+    Model = super name
+    Model.MongooseModel = @mongoose.model(name, schema)
+    Model
 
-
-
-
-MongoDriver.ModelProto = require('./ModelProto')
+MongoDriver.Model = require('./Model')
 
 module.exports = Driver.drivers.Mongo = MongoDriver

@@ -25,7 +25,7 @@ class Query
 
 
 class Batcher
-  constructor: (@wait = 0) ->
+  constructor: (@Model, @wait = 0) ->
     @query = null
 
   by: (id) ->
@@ -34,6 +34,5 @@ class Batcher
 
 
 utils.protoMustImplement(Batcher, 'getList')
-
 
 module.exports = Batcher
