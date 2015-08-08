@@ -29,7 +29,7 @@ dependencyList = [
   './Batcher'
   './Driver'
   './Relationship'
-  './buildRelationships'
+  './buildModels'
   './Model'
   './Mongo'
   './Controller'

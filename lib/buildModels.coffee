@@ -16,7 +16,7 @@ addAncestorsForModel = (model) ->
 addAncestors = (models) ->
   _.chain(models).map(addAncestorsForModel).every().value()
 
-buildRelationships = (models) ->
+buildModels = (models) ->
   model.init() for model in _.values(models)
   buildParents(models)
   allAncestorsBuilt = false
@@ -24,4 +24,4 @@ buildRelationships = (models) ->
     allAncestorsBuilt = addAncestors(models)
 
 
-module.exports = buildRelationships
+module.exports = buildModels
