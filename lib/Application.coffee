@@ -1,6 +1,5 @@
 { _, bodyParser, cookieParser, express, expressSession, LaterList, defaults
-, buildRelationships, buildGraphQLObjectTypes, Driver
-, Caches } = require('./dependencies')
+, buildRelationships, Driver , Caches } = require('./dependencies')
 
 class Application
   constructor: (@opts={}) ->
@@ -41,9 +40,7 @@ class Application
     LaterList.Relay.from(@drivers)
       .forEach (driver) => driver.connect()
       .then =>
-        model.init() for model in _.values(@models)
         buildRelationships(@models)
-        buildGraphQLObjectTypes(@models)
         @configure()
         @startServer()
 

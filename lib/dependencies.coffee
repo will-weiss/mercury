@@ -9,7 +9,6 @@ dependencyList = [
   'bluebird::Promise'
   'body-parser::bodyParser'
   'cookie-parser::cookieParser'
-  'connect-mongo::connectMongo'
   'express'
   'express-session::expressSession'
   'fs'
@@ -19,7 +18,6 @@ dependencyList = [
   'lodash::_'
   'moment'
   'mongoose'
-  'require-all::requireAll'
   'util'
   'vers'
   'winston'
@@ -32,12 +30,9 @@ dependencyList = [
   './Driver'
   './Relationship'
   './buildRelationships'
-  './buildGraphQLObjectTypes'
   './Model'
   './Mongo'
-  './graphQL'
   './Controller'
-  './controllers'
   './Application'
 ]
 

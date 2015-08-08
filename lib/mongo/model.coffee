@@ -10,12 +10,6 @@ class MongoModel extends Model
     super name, opts
     @MongooseModel = null
 
-  genFormNextQuery: (parentIdField) ->
-    (ids) ->
-      query = {}
-      query[parentIdField] = {$in: ids}
-      query
-
   find: (query) ->
     @MongooseModel.findAsync(query)
 
@@ -49,18 +43,16 @@ class MongoModel extends Model
       .object()
       .value()
 
+  formQuery: (parentIdField, ids) ->
+    query = {}
+    query[parentIdField] = {$in: ids}
+    query
+
   get: (mongooseModel, key) -> mongooseModel.get(key)
 
   set: (mongooseModel, key, val) -> mongooseModel.set(key, val)
 
   getId: (mongooseModel) -> mongooseModel._id
-
-  genFirstQuery = (parentIdField) ->
-    query = {}
-    query[parentIdField] = @getId()
-    query
-
-  toObject: (mongooseModel) -> mongooseModel.toObject()
 
 
 

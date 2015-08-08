@@ -1,4 +1,4 @@
-{_} = require('./dependencies')
+{_, graphql} = require('./dependencies')
 
 class Link
   constructor: (@child, @parent) ->
@@ -17,12 +17,15 @@ class ChildRelationship extends Relationship
     links = links.slice(0).reverse()
     super child, parent, links
     [@firstLinks..., @lastLink] = @links
+    @parent.fields[@child.appearsAsPlural] =
+      resolve: @getList.bind(@)
+      description: @child.name
+      type: new graphql.GraphQLList(@child.objectType)
 
   descend: (links, ids) ->
     [link, next...] = links
     {child, parentIdField} = link
-    query = {}
-    query[parentIdField] = {$in: ids}
+    query = child.formQuery(parentIdField, ids)
     promisedIds = child.distinctIds(query)
     return promisedIds unless next.length
     promisedIds.then(@descend.bind(@, next))
@@ -33,8 +36,7 @@ class ChildRelationship extends Relationship
 
   getList: (parentInstance) ->
     @getPriorParentIds(parentInstance).then (ids) =>
-      query = {}
-      query[@lastLink.parentIdField] = {$in: ids}
+      query = @child.formQuery(@lastLink.parentIdField, ids)
       @child.find(query)
 
 
@@ -45,12 +47,15 @@ class ParentRelationship extends Relationship
     super child, parent, links
     @parent.relationships.child[@child.name] = new ChildRelationship(@)
     @get = @ascend.bind(@, links)
-    # [@firstLink, @lastLinks...] = @links
+    @child.fields[@parent.appearsAsSingular] =
+      resolve: @get.bind(@)
+      description: @parent.name
+      type: @parent.objectType
 
   ascend: (links, childInstance) ->
     [link, next...] = links
-    {parent, parentIdField} = link
-    id = childInstance.get(parentIdField)
+    {child, parent, parentIdField} = link
+    id = child.get(childInstance, parentIdField)
     promisedParent = parent.findById(id)
     return promisedParent unless next.length
     promisedParent.then(@ascend.bind(@, next))
@@ -70,6 +75,7 @@ class ParentRelationship extends Relationship
         _.extend(childParents, newAncestorRelationships)
         _.isEmpty(newAncestorRelationships)
       .value()
+
 
 module.exports =
   Parent: ParentRelationship

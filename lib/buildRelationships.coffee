@@ -2,7 +2,6 @@
 
 buildParents = (models) ->
   _.forEach models, (model) ->
-    _.extend(model.parentIdFields, model.getParentIdFields())
     _.keys(model.parentIdFields).forEach (parentName) ->
       parent = models[parentName]
       # TODO throw here?
@@ -18,6 +17,7 @@ addAncestors = (models) ->
   _.chain(models).map(addAncestorsForModel).every().value()
 
 buildRelationships = (models) ->
+  model.init() for model in _.values(models)
   buildParents(models)
   allAncestorsBuilt = false
   until allAncestorsBuilt
