@@ -48,7 +48,7 @@ class ParentRelationship extends Relationship
     @parent.relationships.child[@child.name] = new ChildRelationship(@)
     @get = @ascend.bind(@, links)
     @child.fields[@parent.appearsAsSingular] =
-      resolve: @get.bind(@)
+      resolve: @get
       description: @parent.name
       type: @parent.objectType
 

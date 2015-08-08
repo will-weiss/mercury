@@ -1,5 +1,5 @@
-{ _, bodyParser, cookieParser, express, expressSession, LaterList, defaults
-, buildRelationships, Driver , Caches } = require('./dependencies')
+{ _, bodyParser, cookieParser, express, expressSession, graphql, LaterList
+, defaults, buildModels, Driver, Caches } = require('./dependencies')
 
 class Application
   constructor: (@opts={}) ->
@@ -16,14 +16,11 @@ class Application
 
   configure: ->
     @express.set('port', @opts.port)
-    @express.use(express.static(@opts.static)) if @opts.static
-    @express.use(bodyParser({ limit: @opts.fileLimit }))
+    @express.use(bodyParser({limit: @opts.fileLimit}))
     @express.use(bodyParser.urlencoded({extended:true}))
     @express.use(cookieParser())
 
-  # Error handling is the last thing in the stack
   configureAppErrorHandling: ->
-    logger.info("Configuring error handling for app")
     @express.use (err, req, res, next) ->
       logger.error(err.message)
       res.status(500)
@@ -36,12 +33,24 @@ class Application
         reject(err) if err
         resolve(@)
 
+  addSchemas: ->
+    _.forEach @models, (model, name) =>
+      return unless model.schema
+      @express.get "#{@opts.route}/#{name}", (req, res) ->
+        graphql.graphql(model.schema, JSON.parse(req.query.query).query, req)
+        .then (result) =>
+          res.status(200).send(result)
+        .catch (err) =>
+          console.log(err)
+          res.status(500).send(err)
+
   run: ->
     LaterList.Relay.from(@drivers)
       .forEach (driver) => driver.connect()
       .then =>
-        buildRelationships(@models)
         @configure()
+        buildModels(@models)
+        @addSchemas()
         @startServer()
 
 

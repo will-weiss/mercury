@@ -24,7 +24,7 @@ class Driver
 
 Driver.drivers = {}
 
-utils.ctorMustImplement(Driver, 'Model')
-utils.protoMustImplement(Driver, 'connect')
+utils.mustImplement(Driver, 'Model', 'connect')
+
 
 module.exports = Driver

@@ -9,15 +9,10 @@ toFlood = (stream) ->
   stream.on 'close', flood.end.bind(flood)
   return flood
 
-ctorMustImplement = (Ctor, fnNames...) ->
-  fnNames.forEach (fnName) ->
-    Ctor[fnName] = ->
-      throw new Error("#{Ctor.name} must implement #{fnName}.")
-
-protoMustImplement = (Ctor, fnNames...) ->
+mustImplement = (Ctor, fnNames...) ->
   fnNames.forEach (fnName) ->
     Ctor[fnName] = ->
       throw new Error("#{Ctor.name}.prototype must implement #{fnName}.")
 
 
-module.exports = { toFlood, ctorMustImplement, protoMustImplement }
+module.exports = { toFlood, mustImplement }

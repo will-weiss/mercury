@@ -1,8 +1,8 @@
-{_, i, utils, graphql} = require('./dependencies')
+{_, i, utils, graphql, createSchema} = require('./dependencies')
 
 {pluralize} = i()
 
-{ctorMustImplement, protoMustImplement} = utils
+{mustImplement} = utils
 
 class Model
   constructor: (@app, @name, @opts={}) ->
@@ -22,6 +22,7 @@ class Model
       name: @name
       description: @appearsAsSingular
       fields: => @fields
+    @schema = if @opts.isRoot then createSchema(@) else null
 
   findById: (id) ->
     cacheHit = @cache.get(id)
@@ -29,5 +30,11 @@ class Model
     fetched = @batcher.by(id)
     @cache.set(id, fetched)
     fetched
+
+utils.mustImplement(
+  Model, 'find', 'count', 'distinct', 'distinctIds', 'getAppearsAs',
+    'getParentIdFields', 'getFields', 'formQuery', 'get', 'set', 'getId'
+)
+
 
 module.exports = Model

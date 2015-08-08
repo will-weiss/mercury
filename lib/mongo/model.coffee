@@ -3,11 +3,10 @@
 typeMap = require('./typeMap')
 
 class MongoModel extends Model
-
   Batcher: require('./Batcher')
 
-  constructor: (name, opts) ->
-    super name, opts
+  constructor: (app, name, opts) ->
+    super app, name, opts
     @MongooseModel = null
 
   find: (query) ->
@@ -53,7 +52,6 @@ class MongoModel extends Model
   set: (mongooseModel, key, val) -> mongooseModel.set(key, val)
 
   getId: (mongooseModel) -> mongooseModel._id
-
 
 
 module.exports = MongoModel

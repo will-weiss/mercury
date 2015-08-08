@@ -28,6 +28,7 @@ dependencyList = [
   './Caches'
   './Batcher'
   './Driver'
+  './createSchema'
   './Relationship'
   './buildModels'
   './Model'
