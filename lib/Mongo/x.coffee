@@ -1,6 +1,7 @@
 {_, Model, utils} = require('../dependencies')
 
-typeMap = require('./typeMap')
+getGraphQLFieldsFromSchema = require('./getGraphQLFieldsFromSchema')
+
 
 class MongoModel extends Model
   Batcher: require('./Batcher')
@@ -8,6 +9,9 @@ class MongoModel extends Model
   constructor: (app, name, opts) ->
     super app, name, opts
     @MongooseModel = null
+
+  create: (doc) ->
+    (new this.MongooseModel(doc)).saveAsync()
 
   find: (query) ->
     @MongooseModel.findAsync(query)
@@ -31,16 +35,7 @@ class MongoModel extends Model
       .value()
 
   getFields: ->
-    _.chain(@MongooseModel.schema.paths)
-      .map ({instance, path}) ->
-        type = typeMap[instance]
-        # TODO implement all types
-        return unless type
-        description = path
-        [path, {type, description}]
-      .compact()
-      .object()
-      .value()
+    getGraphQLFieldsFromSchema(@MongooseModel.schema)
 
   formQuery: (parentIdField, ids) ->
     query = {}

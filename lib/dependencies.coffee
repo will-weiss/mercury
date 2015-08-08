@@ -5,7 +5,6 @@ dependencies = module.exports
 dependencyList = [
 
   # node_modules
-  'allong.es::allong'
   'bluebird::Promise'
   'body-parser::bodyParser'
   'cookie-parser::cookieParser'
@@ -16,11 +15,7 @@ dependencyList = [
   'i'
   'LaterList'
   'lodash::_'
-  'moment'
   'mongoose'
-  'util'
-  'vers'
-  'winston'
 
   # mercury
   './defaults'

@@ -19,7 +19,6 @@ class Query
       .catch (err) => deferred.reject(err) for id, deferred of @deferreds
 
   by: (id) ->
-    console.log("BATCHING ID: #{id}")
     unless @deferreds[id]
       @ids.push(id)
       @deferreds[id] = Promise.pending()

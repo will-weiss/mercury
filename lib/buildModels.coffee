@@ -16,6 +16,9 @@ addAncestorsForModel = (model) ->
 addAncestors = (models) ->
   _.chain(models).map(addAncestorsForModel).every().value()
 
+addMutations = (models) ->
+
+
 buildModels = (models) ->
   model.init() for model in _.values(models)
   buildParents(models)
