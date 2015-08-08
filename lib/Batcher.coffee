@@ -7,8 +7,9 @@ class Query
     setTimeout(@run.bind(@), @batcher.wait)
 
   resolveOne: (result) ->
-    deferred = @deferreds[result._id]
-    delete @deferreds[result._id]
+    id = @batcher.Model.getId(result)
+    deferred = @deferreds[id]
+    delete @deferreds[id]
     deferred.resolve(result)
 
   run: ->

@@ -2,7 +2,7 @@
 
 class MongoModelBatcher extends Batcher
   getList: (ids) ->
-    utils.toFlood(@Model.MongooseModel.find({_id: {$in: ids}}).stream())
+    utils.toFlood(@batcher.Model.MongooseModel.find({_id: {$in: ids}}).stream())
       .forEach(@resolveOne.bind(@))
 
 

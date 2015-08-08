@@ -15,12 +15,10 @@ class Model
     @appearsAsSingular ||= @getAppearsAs()
     # Get how the model appears as a plural if not otherwise specified.
     @appearsAsPlural ||= pluralize(@appearsAsSingular)
-    @findAsChildrenFns = {}
-    @findPriorParentFns = {}
-    @countAsChildrenFns = {}
-    @distinctAsChildrenFns = {}
-    @parentIds = {}
     @relationships = {child: {}, parent: {}}
+    @parentIdFields = {}
+    @fields = null
+    @objectType = null
 
   childQueryFn: (parentInstance, queryFns) ->
     reduceQueries(@getFirstQuery(parentInstance), queryFns)
@@ -34,7 +32,7 @@ class Model
     cacheHit = @cache.get(id)
     return cacheHit if cacheHit isnt undefined
     fetched = @batcher.by(id)
-    cache.set(id, fetched)
+    @cache.set(id, fetched)
     fetched
 
   findAsChildren: (childQueryFn, parentInstance, queryExt = {}) ->
@@ -52,25 +50,18 @@ class Model
       _.extend(query, queryExt)
       @distinct(field, query)
 
-  genNextQueryFn: (parentId) ->
+  genNextQueryFn: (parentIdField) ->
     (priorQuery) ->
       @distinctIds(priorQuery).then(@formNextQuery.bind(@))
 
-  findAsParent: (parentId, childInstance) ->
-    @findById(childInstance.get(parentId))
-
-  createInstance: ->
-    new this.ModelInstance(@)
-
+  findAsParent: (parentIdField, childInstance) ->
+    @findById(childInstance.get(parentIdField))
 
 
 protoMustImplement(
   Model, 'Batcher', 'ModelInstance', 'count', 'distinct', 'distinctIds', 'find',
-    'formNextQuery', 'getAppearsAs', 'getParentIds', 'getFields'
+    'formNextQuery', 'getAppearsAs', 'getParentIdFields', 'getFields'
 )
-
-
-
 
 
 module.exports = Model
