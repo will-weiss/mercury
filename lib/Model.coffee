@@ -22,6 +22,7 @@ class Model
       name: @name
       description: @appearsAsSingular
       fields: => @fields
+    @listType = new graphql.GraphQLList(@objectType)
     @schema = if @opts.isRoot then createSchema(@) else null
 
   findById: (id) ->

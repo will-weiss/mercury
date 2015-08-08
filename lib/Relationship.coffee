@@ -4,6 +4,7 @@ class Link
   constructor: (@child, @parent) ->
     @parentIdField = @child.parentIdFields[@parent.name]
 
+
 class Relationship
   constructor: (@child, @parent, links) ->
     @links = links || [new Link(@child, @parent)]
@@ -20,7 +21,7 @@ class ChildRelationship extends Relationship
     @parent.fields[@child.appearsAsPlural] =
       resolve: @getList.bind(@)
       description: @child.name
-      type: new graphql.GraphQLList(@child.objectType)
+      type: @child.listType
 
   descend: (links, ids) ->
     [link, next...] = links
