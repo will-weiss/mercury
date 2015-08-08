@@ -37,7 +37,7 @@ class Application
     _.forEach @models, (model, name) =>
       return unless model.schema
       @express.get "#{@opts.route}/#{name}", (req, res) ->
-        graphql.graphql(model.schema, JSON.parse(req.query.query).query, req)
+        graphql.graphql(model.schema, req.query.query, req)
         .then (result) =>
           res.status(200).send(result)
         .catch (err) =>

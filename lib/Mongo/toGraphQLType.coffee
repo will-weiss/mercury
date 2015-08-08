@@ -1,6 +1,29 @@
-{_, Model, utils} = require('../dependencies')
+{_, Model, utils, graphql} = require('../dependencies')
 
 typeMap = require('./typeMap')
+
+
+getGraphQLType = (schema, field, name) ->
+  if _.isFunction(field)
+    {instance} = schema.paths[name]
+    typeMap[instance]
+  else if _.isArray(field)
+    new graphql.GraphQLList(getGraphQLType(schema, field[0], name))
+  else
+    fields = _.mapValues field, (subField, path) ->
+      getGraphQLType(schema, subField, "#{name}.path")
+    new graphql.GraphQLObjectType(name, fields)
+
+getGraphQLFields = (schema) ->
+  _.chain(schema.tree)
+    .map (field, name) ->
+      graphQLType = getGraphQLType(schema, field, name)
+      return unless graphQLType
+      [name, graphQLType]
+    .compact()
+    .object()
+    .value()
+
 
 class MongoModel extends Model
   Batcher: require('./Batcher')
@@ -34,16 +57,7 @@ class MongoModel extends Model
       .value()
 
   getFields: ->
-    _.chain(@MongooseModel.schema.tree)
-      .map ({instance, path}) ->
-        type = typeMap[instance]
-        # TODO implement all types
-        return unless type
-        description = path
-        [path, {type, description}]
-      .compact()
-      .object()
-      .value()
+    getGraphQLFields(@MongooseModel.schema)
 
   formQuery: (parentIdField, ids) ->
     query = {}

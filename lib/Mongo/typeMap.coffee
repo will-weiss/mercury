@@ -6,5 +6,5 @@ module.exports =
   Mixed: graphql.GraphQLObjectType
   Boolean: graphql.GraphQLBoolean
   Number: graphql.GraphQLFloat
-  ObjectId: graphql.GraphQLString
+  ObjectId: graphql.GraphQLID
   Date: graphql.GraphQLString
