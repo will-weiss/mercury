@@ -20,12 +20,6 @@ class Application
     @express.use(bodyParser.urlencoded({extended:true}))
     @express.use(cookieParser())
 
-  configureAppErrorHandling: ->
-    @express.use (err, req, res, next) ->
-      logger.error(err.message)
-      res.status(500)
-      res.send(err.stack)
-
   # Finally, start the server
   startServer: ->
     return new Promise (resolve, reject) =>
@@ -33,7 +27,7 @@ class Application
         reject(err) if err
         resolve(@)
 
-  addSchemas: ->
+  addSchema: ->
     schema = createSchema(@models)
     @express.get @opts.route, (req, res) ->
       graphql.graphql(schema, req.query.query, req)
@@ -49,7 +43,7 @@ class Application
       .then =>
         @configure()
         buildModels(@models)
-        @addSchemas()
+        @addSchema()
         @startServer()
 
 

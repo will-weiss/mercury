@@ -28,7 +28,6 @@ dependencyList = [
   './buildModels'
   './Model'
   './Mongo'
-  './Controller'
   './Application'
 ]
 

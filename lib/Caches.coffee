@@ -1,3 +1,4 @@
+# A single value store. Slots are used by all caches as needed.
 class Slot
   constructor: (@cs) ->
     @init()
@@ -23,6 +24,7 @@ class Slot
     return
 
 
+# Maps ids to slots. One may get, set, and unset values on the cache by id.
 class Cache
   constructor: (@cs) ->
     @cached = {}
@@ -32,14 +34,17 @@ class Cache
 
   set: (id, val) ->
     return if val is undefined
+    return @cached[id].val = val if id of @cached
     @cs.getSlot().set(@cached, id, val)
 
   unset: (id) ->
     @cached[id]?.unset()
 
 
+# Maintains caches and apportions pre-allocated slots as needed for each.
+# Expires old slots on an interval.
 class Caches
-  constructor: (size = 10000, exptime = 10000) ->
+  constructor: (size = 50000, exptime = 10000) ->
     @init()
     @run(size, exptime)
 

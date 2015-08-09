@@ -1,100 +1,103 @@
 {_, graphql} = require('./dependencies')
 
 { GraphQLNonNull, GraphQLString, GraphQLObjectType, GraphQLSchema
-, GraphQLList, GraphQLID } = graphql
+, GraphQLBoolean, GraphQLList, GraphQLID } = graphql
 
 idType = new GraphQLNonNull(GraphQLID)
 fieldListType = new GraphQLList(GraphQLString)
 
-getCreateField = (model, name) ->
-  {appearsAsSingular, objectType, fieldsOnDoc} = model
-  createFieldName = 'create' + _.capitalize(appearsAsSingular)
-  type = objectType
-  args = _.clone(fieldsOnDoc)
-  parentNameToParentId = _.chain(model.relationships.parent)
-    .map ({links}, name) ->
-      return if links.length isnt 1
-      [name, links[0].refKey]
-    .compact()
-    .tap ([name, parentId]) -> args[name] = {name, type: GraphQLID}
-    .object()
-    .value()
 
-  resolve = (root, docInit) ->
-    _.chain(docInit)
-      .map (value, key) ->
-        return unless value?
-        key = parentNameToParentId[key] || key
-        [key, value]
-      .compact()
-      .object()
-      .thru(model.create.bind(model))
-      .value()
+class GraphQLField
+  constructor: (@name) ->
+    @args = {}
+    @type = null
+    @resolve = null
 
-  [createFieldName, {type, args, resolve}]
 
-getUpdateField = (model, name) ->
-  {appearsAsSingular, objectType, fieldsOnDoc, parentNameToParentId} = model
+class ReadField extends GraphQLField
+  constructor: (model, name) ->
+    super model.appearsAsSingular
+    @type = model.objectType
 
-  updateFieldName = 'update' + _.capitalize(appearsAsSingular)
-  type = objectType
-  args = _.clone(fieldsOnDoc)
-  args[name] = {name, type: GraphQLString} for name of parentNameToParentId
+    @args.id =
+      description: "id of the #{name} to find"
+      type: idType
 
-  args =
-    id:
+    @resolve = (root, {id}) -> model.findById(id)
+
+
+class MutationField extends GraphQLField
+  constructor: (model) ->
+    super @mutation + _.capitalize(model.appearsAsSingular)
+
+
+class CreateField extends MutationField
+  mutation: 'create'
+
+  constructor: (model, name) ->
+    super model
+    @args.doc =
+      description: "A #{name} document to create"
+      type: model.inputObjectType
+    @type = model.objectType
+
+    @resolve = (root, {doc}) -> model.create(doc)
+
+
+class UpdateField extends MutationField
+  mutation: 'update'
+
+  constructor: (model, name) ->
+    super model
+    @args.id =
       description: "id of the #{name} to update"
       type: idType
-    set:
-      description: "Values of the #{name} to update"
-      type: objectType
-    unset:
-      description: "Keys of the #{name} to set as null"
+    @args.set =
+      description: "Updates to a #{name} document"
+      type: new GraphQLNonNull(model.inputObjectType)
+    @args.unset =
+      description: "Keys of the #{name} document to unset"
       type: fieldListType
 
-  resolve = (root, {id, set, unset}) ->
-    console.log set
-    _.chain(set)
-      .map (value, key) ->
-        return unless value?
-        key = parentNameToParentId[key] || key
-        [key, value]
-      .compact()
-      .object()
-      .thru (doc) -> doc[key] = null for key in (unset || [])
-      .thru(model.update.bind(model, id))
-      .value()
+    @type = model.objectType
 
-  [updateFieldName, {type, args, resolve}]
+    @resolve = (root, {id, set, unset}) ->
+      updates = {}
+      updates[k] = v for k, v of set when v?
+      updates[k] = null for k in unset if unset
+      model.update(id, updates)
 
-createMutationType = (models) ->
-  fields = _.chain([getCreateField, getUpdateField])
-    .map (fn) -> _.chain(models).map(fn).value()
+
+class RemoveField extends MutationField
+  mutation: 'remove'
+
+  constructor: (model, name) ->
+    super model
+    @args.id =
+      description: "id of the #{name} to remove"
+      type: idType
+    @type = GraphQLBoolean
+
+    @resolve = (root, {id}) -> model.remove(id)
+
+
+createOperationObjectType = (models, ctors, operation) ->
+  fields =_.chain(ctors)
+    .map (FieldCtor) ->
+      _.map models, (model, name) -> new FieldCtor(model, name)
     .flatten()
+    .map (f) -> [f.name, f]
     .object()
     .value()
 
-  new GraphQLObjectType({fields, name: 'Mutation'})
+  new GraphQLObjectType({fields, name: _.capitalize(operation)})
 
-createQueryType = (models) ->
-  fields = _.chain(models)
-    .map (model, name) ->
-      field =
-        type: model.objectType
-        args:
-          id:
-            description: "id of the #{name} to find"
-            type: idType
-        resolve: (root, {id}) -> model.findById(id)
-      [model.appearsAsSingular, field]
-    .object()
+operationCtors =
+  query: [ReadField]
+  mutation: [CreateField, UpdateField, RemoveField]
+
+module.exports = (models) ->
+  _.chain(operationCtors)
+    .mapValues(createOperationObjectType.bind(null, models))
+    .thru (obj) -> new GraphQLSchema(obj)
     .value()
-
-  new GraphQLObjectType({fields, name: 'Query'})
-
-createRootSchema = (models) ->
-  query = createQueryType(models)
-  mutation = createMutationType(models)
-  new GraphQLSchema({query, mutation})
-
-module.exports = createRootSchema

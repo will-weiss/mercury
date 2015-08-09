@@ -6,9 +6,10 @@
 { GraphQLString, GraphQLBoolean, GraphQLFloat, GraphQLID, GraphQLString
 , GraphQLObjectType, GraphQLList } = graphql
 
+# Maintain a type representing a list of ids.
 idListType = new GraphQLList(GraphQLID)
 
-# Map MongoDB types to GraphQL types
+# Map MongoDB types to GraphQL types.
 typeMap =
   Boolean: GraphQLBoolean
   Number: GraphQLFloat
@@ -17,17 +18,20 @@ typeMap =
   ObjectId: GraphQLID
 
 
-# Iterate over the schema of the MongoModel's MongooseModel to determine its
-# fields and relationships.
-init = ->
+# Called with an execution context of a MongoModel. Iterate over the schema of
+# the MongooseModel to determine its fields and relationships.
+module.exports = ->
   {schema} = @MongooseModel
   {models} = @app
+
+  # Create a GraphQL field given a type and field name.
+  toGraphQLField = (type, name) => {type, description: "#{name} of #{@name}"}
 
   # From a document field, obtain a corresponding GraphQL field. Return
   # undefined if the document field has no valid GraphQL type.
   getGraphQLField = (docField, name) =>
     type = getGraphQLType(docField, name)
-    if type then {type, description: name}
+    if type then toGraphQLField(type, name)
 
   # Create a GraphQLObjectType for a subdocument.
   getGraphQLObjectType = (subDoc, name) =>
@@ -35,38 +39,39 @@ init = ->
       getGraphQLField(field, "#{name}.#{path}")
     new GraphQLObjectType({name, fields})
 
+  # Add a link between the model and its referrant model.
   addLink = (name, ref, nested) =>
     type = if nested then idListType else GraphQLID
-    @fieldsOnDoc[name] = {type, description: name}
+    @fieldsOnDoc[name] = toGraphQLField(type, name)
 
     refModel = models[ref]
     # TODO throw if referrant model cannot be found?
     if refModel
+      # Arrays of ids refer to siblings. Single id's refer to parents.
       LinkCtor = if nested then Link.Sibling else Link.ParentChild
       new LinkCtor(@, refModel, name)
 
+    # Return no type. Fields have already been added by the Link constructor
+    # when there is a referrant model.
     return
 
   # Recursively determine the GraphQL type of a document field.
   getGraphQLType = (docField, name, nested) =>
-
+    # The doc field must exist to have a GraphQL type.
     return unless docField?
-
+    # Alias the referrant and type of the docField.
     {ref, type} = docField
-
+    # Determine the GraphQL type
     switch
-      # The virtual 'id' field is a GraphQLID
-      when name is 'id'
-        GraphQLID
-
       # If the field refers to another model, the objectType of that model is
       # the GraphQL type.
       when ref
         addLink(name, ref, nested)
 
       # If the docField or its 'type' attribute is a function, the corresponding
-      # GraphQL type of that path is given by the type map. Note, that
-      # Mongoose's Mixed type does not map to any type.
+      # GraphQL type of that path is given by the type map. Note, that some
+      # Mongoose's Mixed type does not map to any type such that these fields
+      # are not immediately queryable.
       when [docField, type].some(_.isFunction)
         typeMap[schema.paths[name].instance]
 
@@ -89,11 +94,7 @@ init = ->
   # For each field in the tree of the schema, add a GraphQL field to the model
   # for all those document fields that correspond with GraphQL types.
   _.forEach schema.tree, (docField, name) =>
+    return @fields[name] = toGraphQLField(GraphQLID, name) if name is 'id'
     field = getGraphQLField(docField, name)
     return unless field
     @fields[name] = @fieldsOnDoc[name] = field
-
-  if @name is 'EmployerGroup'
-    console.log @fieldsOnDoc
-
-module.exports = init

@@ -1,6 +1,4 @@
-{_, Model, utils} = require('../dependencies')
-
-init =
+{_, Model} = require('../dependencies')
 
 
 class MongoModel extends Model
@@ -16,10 +14,16 @@ class MongoModel extends Model
     creationPromise.then (created) => @cache.set(@getId(created), created)
     creationPromise
 
-  update: (id, doc) ->
-    updatePromise = this.MongooseModel.findByIdAndUpdateAsync(id, doc)
+  update: (id, updates) ->
+    updatePromise = @MongooseModel
+      .findByIdAndUpdateAsync(id, updates)
+      .then (result) -> _.extend(result, updates)
     @cache.set(id, updatePromise)
     updatePromise
+
+  remove: (id) ->
+    @cache.set(id, null)
+    this.MongooseModel.findByIdAndRemove(id)
 
   find: (query) ->
     @MongooseModel.findAsync(query)
@@ -32,8 +36,6 @@ class MongoModel extends Model
 
   distinctIds: (query) ->
     @MongooseModel.distinctAsync('_id', query)
-
-  getAppearsAs: -> _.camelCase(@name)
 
   formQuery: (parentIdField, ids) ->
     query = {}
@@ -48,3 +50,4 @@ class MongoModel extends Model
 
 
 module.exports = MongoModel
+
