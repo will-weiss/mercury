@@ -1,16 +1,28 @@
 {_, graphql} = require('./dependencies')
 
-class Link
+
+
+class Relationship
+
+
+class SiblingRelationship extends Relationship
+  type: 'sibling'
+
+  constructor: (@from, @to) ->
+
+
+
+class ParentChildLink
   constructor: (@child, @parent) ->
     @parentIdField = @child.parentIdFields[@parent.name]
 
 
-class Relationship
+class ParentChildRelationship extends Relationship
   constructor: (@child, @parent, links) ->
-    @links = links || [new Link(@child, @parent)]
+    @links = links || [new ParentChildLink(@child, @parent)]
 
 
-class ChildRelationship extends Relationship
+class ChildRelationship extends ParentChildRelationship
   type: 'child'
 
   constructor: (parentRelationship) ->
@@ -41,7 +53,7 @@ class ChildRelationship extends Relationship
       @child.find(query)
 
 
-class ParentRelationship extends Relationship
+class ParentRelationship extends ParentChildRelationship
   type: 'parent'
 
   constructor: (child, parent, links) ->

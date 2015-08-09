@@ -6,8 +6,6 @@
 
 class Model
   constructor: (@app, @name, @opts={}) ->
-
-  init: ->
     @batcher = new this.Batcher(@)
     @cache = @app.caches.new(@name)
     {@appearsAsSingular, @appearsAsPlural} = @opts
@@ -15,7 +13,10 @@ class Model
     @appearsAsSingular ||= @getAppearsAs()
     # Get how the model appears as a plural if not otherwise specified.
     @appearsAsPlural ||= pluralize(@appearsAsSingular)
-    @relationships = {child: {}, parent: {}}
+    @fields = {}
+    @relationships = {child: {}, parent: {}, sibling: {}}
+
+  init: ->
     @parentIdFields = @getParentIdFields()
     @parentNameToParentId = _.invert(@parentIdFields)
     @fields = @basicFields = @getFields()
