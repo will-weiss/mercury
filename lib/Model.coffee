@@ -17,6 +17,7 @@ class Model
     @appearsAsPlural ||= pluralize(@appearsAsSingular)
     @relationships = {child: {}, parent: {}}
     @parentIdFields = @getParentIdFields()
+    @parentNameToParentId = _.invert(@parentIdFields)
     @fields = @basicFields = @getFields()
     @objectType = new graphql.GraphQLObjectType
       name: @name

@@ -11,7 +11,14 @@ class MongoModel extends Model
     @MongooseModel = null
 
   create: (doc) ->
-    (new this.MongooseModel(doc)).saveAsync().then(_.first)
+    creationPromise = (new this.MongooseModel(doc)).saveAsync().then(_.first)
+    creationPromise.then (created) => @cache.set(@getId(created), created)
+    creationPromise
+
+  update: (id, doc) ->
+    updatePromise = this.MongooseModel.findByIdAndUpdateAsync(id, doc)
+    @cache.set(id, updatePromise)
+    updatePromise
 
   find: (query) ->
     @MongooseModel.findAsync(query)
