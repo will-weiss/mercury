@@ -24,7 +24,7 @@ dependencyList = [
   './Batcher'
   './Driver'
   './createSchema'
-  './Relationship'
+  './Link'
   './buildModels'
   './Model'
   './Mongo'

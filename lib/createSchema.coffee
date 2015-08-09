@@ -1,17 +1,24 @@
 {_, graphql} = require('./dependencies')
 
 { GraphQLNonNull, GraphQLString, GraphQLObjectType, GraphQLSchema
-, GraphQLList } = graphql
+, GraphQLList, GraphQLID } = graphql
 
-idType = new GraphQLNonNull(GraphQLString)
+idType = new GraphQLNonNull(GraphQLID)
 fieldListType = new GraphQLList(GraphQLString)
 
 getCreateField = (model, name) ->
-  {appearsAsSingular, objectType, basicFields, parentNameToParentId} = model
+  {appearsAsSingular, objectType, fieldsOnDoc} = model
   createFieldName = 'create' + _.capitalize(appearsAsSingular)
   type = objectType
-  args = _.clone(basicFields)
-  args[name] = {name, type: GraphQLString} for name of parentNameToParentId
+  args = _.clone(fieldsOnDoc)
+  parentNameToParentId = _.chain(model.relationships.parent)
+    .map ({links}, name) ->
+      return if links.length isnt 1
+      [name, links[0].refKey]
+    .compact()
+    .tap ([name, parentId]) -> args[name] = {name, type: GraphQLID}
+    .object()
+    .value()
 
   resolve = (root, docInit) ->
     _.chain(docInit)
@@ -27,11 +34,11 @@ getCreateField = (model, name) ->
   [createFieldName, {type, args, resolve}]
 
 getUpdateField = (model, name) ->
-  {appearsAsSingular, objectType, basicFields, parentNameToParentId} = model
+  {appearsAsSingular, objectType, fieldsOnDoc, parentNameToParentId} = model
 
   updateFieldName = 'update' + _.capitalize(appearsAsSingular)
   type = objectType
-  args = _.clone(basicFields)
+  args = _.clone(fieldsOnDoc)
   args[name] = {name, type: GraphQLString} for name of parentNameToParentId
 
   args =
