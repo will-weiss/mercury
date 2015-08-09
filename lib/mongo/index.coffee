@@ -8,6 +8,7 @@ class MongoDriver extends Driver
     @schemas = {}
     @mongoose = new mongoose.Mongoose()
     Promise.promisifyAll(@mongoose.Model)
+    Promise.promisifyAll(@mongoose.Model.prototype)
     @connection = null
     @connected = Promise.pending()
 

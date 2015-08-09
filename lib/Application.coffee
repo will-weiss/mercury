@@ -1,5 +1,5 @@
 { _, bodyParser, cookieParser, express, expressSession, graphql, LaterList
-, defaults, buildModels, Driver, Caches } = require('./dependencies')
+, defaults, buildModels, Driver, Caches, createSchema } = require('./dependencies')
 
 class Application
   constructor: (@opts={}) ->
@@ -34,15 +34,14 @@ class Application
         resolve(@)
 
   addSchemas: ->
-    _.forEach @models, (model, name) =>
-      return unless model.schema
-      @express.get "#{@opts.route}/#{name}", (req, res) ->
-        graphql.graphql(model.schema, req.query.query, req)
-        .then (result) =>
-          res.status(200).send(result)
-        .catch (err) =>
-          console.log(err)
-          res.status(500).send(err)
+    schema = createSchema(@models)
+    @express.get @opts.route, (req, res) ->
+      graphql.graphql(schema, req.query.query, req)
+      .then (result) =>
+        res.status(200).send(result)
+      .catch (err) =>
+        console.log(err)
+        res.status(500).send(err)
 
   run: ->
     LaterList.Relay.from(@drivers)

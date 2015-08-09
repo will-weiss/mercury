@@ -17,13 +17,12 @@ class Model
     @appearsAsPlural ||= pluralize(@appearsAsSingular)
     @relationships = {child: {}, parent: {}}
     @parentIdFields = @getParentIdFields()
-    @fields = @getFields()
+    @fields = @basicFields = @getFields()
     @objectType = new graphql.GraphQLObjectType
       name: @name
       description: @appearsAsSingular
-      fields: => @fields
+      fields: @fields
     @listType = new graphql.GraphQLList(@objectType)
-    @schema = if @opts.isRoot then createSchema(@) else null
 
   findById: (id) ->
     cacheHit = @cache.get(id)
@@ -31,6 +30,7 @@ class Model
     fetched = @batcher.by(id)
     @cache.set(id, fetched)
     fetched
+
 
 utils.mustImplement(
   Model, 'find', 'count', 'distinct', 'distinctIds', 'getAppearsAs',

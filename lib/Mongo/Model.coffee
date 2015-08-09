@@ -11,7 +11,7 @@ class MongoModel extends Model
     @MongooseModel = null
 
   create: (doc) ->
-    (new this.MongooseModel(doc)).saveAsync()
+    (new this.MongooseModel(doc)).saveAsync().then(_.first)
 
   find: (query) ->
     @MongooseModel.findAsync(query)
@@ -25,7 +25,7 @@ class MongoModel extends Model
   distinctIds: (query) ->
     @MongooseModel.distinctAsync('_id', query)
 
-  getAppearsAs: -> @MongooseModel.collection.name
+  getAppearsAs: -> _.camelCase(@name)
 
   getParentIdFields: ->
     _.chain(@MongooseModel.schema.tree)
