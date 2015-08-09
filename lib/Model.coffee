@@ -13,18 +13,15 @@ class Model
     @appearsAsSingular ||= @getAppearsAs()
     # Get how the model appears as a plural if not otherwise specified.
     @appearsAsPlural ||= pluralize(@appearsAsSingular)
+    @basicFields = {}
     @fields = {}
     @relationships = {child: {}, parent: {}, sibling: {}}
-
-  init: ->
-    @parentIdFields = @getParentIdFields()
-    @parentNameToParentId = _.invert(@parentIdFields)
-    @fields = @basicFields = @getFields()
     @objectType = new graphql.GraphQLObjectType
       name: @name
       description: @appearsAsSingular
       fields: @fields
     @listType = new graphql.GraphQLList(@objectType)
+    @parentNameToParentId = null
 
   findById: (id) ->
     cacheHit = @cache.get(id)

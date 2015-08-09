@@ -1,4 +1,4 @@
-{_, graphql} = require('./dependencies')
+{_} = require('./dependencies')
 
 
 
@@ -11,25 +11,17 @@ class SiblingRelationship extends Relationship
   constructor: (@from, @to) ->
 
 
-
-class ParentChildLink
-  constructor: (@child, @parent) ->
-    @parentIdField = @child.parentIdFields[@parent.name]
-
-
 class ParentChildRelationship extends Relationship
-  constructor: (@child, @parent, links) ->
-    @links = links || [new ParentChildLink(@child, @parent)]
+  constructor: (@child, @parent, @links) ->
 
 
 class ChildRelationship extends ParentChildRelationship
   type: 'child'
 
-  constructor: (parentRelationship) ->
-    {child, parent, links} = parentRelationship
-    links = links.slice(0).reverse()
+  constructor: (child, parent, links) ->
     super child, parent, links
     [@firstLinks..., @lastLink] = @links
+    @parent.relationships.child[@child.name] = @
     @parent.fields[@child.appearsAsPlural] =
       resolve: @getList.bind(@)
       description: @child.name
@@ -37,8 +29,8 @@ class ChildRelationship extends ParentChildRelationship
 
   descend: (links, ids) ->
     [link, next...] = links
-    {child, parentIdField} = link
-    query = child.formQuery(parentIdField, ids)
+    {child, refKey} = link
+    query = child.formQuery(refKey, ids)
     promisedIds = child.distinctIds(query)
     return promisedIds unless next.length
     promisedIds.then(@descend.bind(@, next))
@@ -49,7 +41,7 @@ class ChildRelationship extends ParentChildRelationship
 
   getList: (parentInstance) ->
     @getPriorParentIds(parentInstance).then (ids) =>
-      query = @child.formQuery(@lastLink.parentIdField, ids)
+      query = @child.formQuery(@lastLink.refKey, ids)
       @child.find(query)
 
 
@@ -58,8 +50,9 @@ class ParentRelationship extends ParentChildRelationship
 
   constructor: (child, parent, links) ->
     super child, parent, links
-    @parent.relationships.child[@child.name] = new ChildRelationship(@)
+    new ChildRelationship(child, parent, links.slice(0).reverse())
     @get = @ascend.bind(@, links)
+    @child.relationships.parent[@parent.name] = @
     @child.fields[@parent.appearsAsSingular] =
       resolve: @get
       description: @parent.name
@@ -67,8 +60,8 @@ class ParentRelationship extends ParentChildRelationship
 
   ascend: (links, childInstance) ->
     [link, next...] = links
-    {child, parent, parentIdField} = link
-    id = child.get(childInstance, parentIdField)
+    {child, parent, refKey} = link
+    id = child.get(childInstance, refKey)
     promisedParent = parent.findById(id)
     return promisedParent unless next.length
     promisedParent.then(@ascend.bind(@, next))
@@ -89,7 +82,9 @@ class ParentRelationship extends ParentChildRelationship
         _.isEmpty(newAncestorRelationships)
       .value()
 
+class ParentChildLink
+  constructor: (@child, @parent, @refKey) ->
+    new ParentRelationship(@child, @parent, [@])
 
-module.exports =
-  Parent: ParentRelationship
-  Child: ChildRelationship
+
+module.exports = {ParentChildLink, Sibling: SiblingRelationship}

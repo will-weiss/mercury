@@ -1,10 +1,11 @@
 {_, Model, utils} = require('../dependencies')
 
-getGraphQLFieldsFromSchema = require('./getGraphQLFieldsFromSchema')
+init =
 
 
 class MongoModel extends Model
   Batcher: require('./Batcher')
+  init: require('./init')
 
   constructor: (app, name, opts) ->
     super app, name, opts
@@ -33,16 +34,6 @@ class MongoModel extends Model
     @MongooseModel.distinctAsync('_id', query)
 
   getAppearsAs: -> _.camelCase(@name)
-
-  getParentIdFields: ->
-    _.chain(@MongooseModel.schema.tree)
-      .map (field, path) -> if field.ref then [field.ref, path]
-      .compact()
-      .object()
-      .value()
-
-  getFields: ->
-    getGraphQLFieldsFromSchema(@MongooseModel.schema)
 
   formQuery: (parentIdField, ids) ->
     query = {}
