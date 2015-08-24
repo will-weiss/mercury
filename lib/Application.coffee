@@ -16,16 +16,14 @@ class Application
 
   configure: ->
     @express.set('port', @opts.port)
-    @express.use(bodyParser({limit: @opts.fileLimit}))
-    @express.use(bodyParser.urlencoded({extended:true}))
+    @express.use(bodyParser.json())
+    @express.use(bodyParser.urlencoded({extended:true, limit: @opts.fileLimit}))
     @express.use(cookieParser())
 
-  # Finally, start the server
   startServer: ->
-    return new Promise (resolve, reject) =>
-      @express.server = @express.listen @opts.port, (err) =>
-        reject(err) if err
-        resolve(@)
+    new Promise (resolve, reject) =>
+      @express.listen @opts.port, (err) =>
+        if err then reject(err) else resolve()
 
   addSchema: ->
     schema = createSchema(@models)

@@ -1,35 +1,23 @@
-{_, i, utils, graphql, createSchema} = require('./dependencies')
+{_, i, utils, graphql, Queryable} = require('./dependencies')
 
 {pluralize} = i()
 
 
 # A queryable entity corresponding with a persistent resource.
-class Model
-  constructor: (@app, @name, @opts={}) ->
+class Model extends Queryable
+  constructor: (@app, name, @opts={}) ->
+    super name
     # A batcher for this model is constructed.
     @batcher = new this.Batcher(@)
     # A cache is created from the app's caches.
     @cache = @app.caches.new(@name)
     # How the model appears as a singular and as a plural.
     {@appearsAsSingular, @appearsAsPlural} = @opts
-    @appearsAsSingular ||= @getAppearsAs()
+    # By default, the model appears as its camelCase name.
+    @appearsAsSingular ||= _.camelCase(@name)
     @appearsAsPlural ||= pluralize(@appearsAsSingular)
 
-    # Construct the corresponding object and list types for this model.
-    @fields = {}
-    @objectType = new graphql.GraphQLObjectType
-      name: @appearsAsSingular
-      description: @name
-      fields: @fields
     @listType = new graphql.GraphQLList(@objectType)
-
-    # Construct the corresponding input object and list types for this model.
-    # The fields to be input are those that appear on documents.
-    @fieldsOnDoc = {}
-    @inputObjectType = new graphql.GraphQLInputObjectType
-      name: @appearsAsSingular
-      description: @name
-      fields: @fieldsOnDoc
     @inputListType = new graphql.GraphQLList(@inputObjectType)
 
     # Relationships between other models of the app are maintained.
@@ -44,9 +32,6 @@ class Model
     fetched = @batcher.by(id)
     @cache.set(id, fetched)
     fetched
-
-  # By default, the model appears as its camelCase name.
-  getAppearsAs: -> _.camelCase(@name)
 
 
 # The prototype of a model must implement the functions below.

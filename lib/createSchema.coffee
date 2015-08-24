@@ -96,8 +96,10 @@ operationCtors =
   query: [ReadField]
   mutation: [CreateField, UpdateField, RemoveField]
 
+
 module.exports = (models) ->
   _.chain(operationCtors)
     .mapValues(createOperationObjectType.bind(null, models))
-    .thru (obj) -> new GraphQLSchema(obj)
+    .thru (obj) ->
+      new GraphQLSchema(obj)
     .value()

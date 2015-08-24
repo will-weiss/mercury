@@ -1,7 +1,7 @@
 # Initializes an instance of MongoModel by extending its fields and adding one
 # level of relationships.
 
-{_, graphql, Link} = require('../dependencies')
+{_, graphql, Link, Queryable} = require('../dependencies')
 
 { GraphQLString, GraphQLBoolean, GraphQLFloat, GraphQLID, GraphQLString
 , GraphQLObjectType, GraphQLList } = graphql
@@ -21,11 +21,11 @@ typeMap =
 # Called with an execution context of a MongoModel. Iterate over the schema of
 # the MongooseModel to determine its fields and relationships.
 module.exports = ->
+  thisModel = @
+  {appearsAsSingular} = @
   {schema} = @MongooseModel
   {models} = @app
 
-  # Create a GraphQL field given a type and field name.
-  toGraphQLField = (type, name) => {type, description: "#{name} of #{@name}"}
 
   # From a document field, obtain a corresponding GraphQL field. Return
   # undefined if the document field has no valid GraphQL type.
@@ -37,12 +37,12 @@ module.exports = ->
   getGraphQLObjectType = (subDoc, name) =>
     fields = _.mapValues subDoc, (field, path) =>
       getGraphQLField(field, "#{name}.#{path}")
-    new GraphQLObjectType({name, fields})
+    new GraphQLObjectType({name: "#{appearsAsSingular}.#{name}", fields})
 
   # Add a link between the model and its referrant model.
   addLink = (name, ref, nested) =>
     type = if nested then idListType else GraphQLID
-    @fieldsOnDoc[name] = toGraphQLField(type, name)
+    @fieldsOfDoc[name] = toGraphQLField(type, name)
 
     refModel = models[ref]
     # TODO throw if referrant model cannot be found?
@@ -73,7 +73,11 @@ module.exports = ->
       # Mongoose's Mixed type does not map to any type such that these fields
       # are not immediately queryable.
       when [docField, type].some(_.isFunction)
-        typeMap[schema.paths[name].instance]
+        # TODO this feels hacky
+        if nested
+          typeMap[schema.paths[name].caster.instance]
+        else
+          typeMap[schema.paths[name].instance]
 
       # If the document field is an array, it is interpreted as a list of the
       # type given by the first element of the array.
@@ -94,7 +98,5 @@ module.exports = ->
   # For each field in the tree of the schema, add a GraphQL field to the model
   # for all those document fields that correspond with GraphQL types.
   _.forEach schema.tree, (docField, name) =>
-    return @fields[name] = toGraphQLField(GraphQLID, name) if name is 'id'
-    field = getGraphQLField(docField, name)
-    return unless field
-    @fields[name] = @fieldsOnDoc[name] = field
+    return @addField(name, GraphQLID) if name is 'id'
+    getGraphQLField(docField, name)

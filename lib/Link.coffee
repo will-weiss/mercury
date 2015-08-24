@@ -23,7 +23,7 @@ class ParentChildRelationship
     # Maintain a reversed copy of the links to find children from instances of a
     # parent. All links but the final link lead to the prior parent and the last
     # link is the parent link.
-    [@linksToPriorParent..., @parentLink] = links.slice(0).reverse()
+    [@linksToPriorParent..., @childLink] = links.slice(0).reverse()
 
     # Find a parent by ascending all links leading from the child to the parent.
     @findParent = @ascend.bind(@, links)
@@ -47,7 +47,7 @@ class ParentChildRelationship
   # referrant key in those ids.
   findChildren: (parentInstance) ->
     @getPriorParentIds(parentInstance).then (ids) =>
-      query = @child.formQuery(@parentLink.refKey, ids)
+      query = @child.formQuery(@childLink.refKey, ids)
       @child.find(query)
 
   # Get the ids of prior parents by descending the links to the prior parent.

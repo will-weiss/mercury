@@ -20,6 +20,7 @@ dependencyList = [
   # mercury
   './defaults'
   './utils'
+  './Queryable'
   './Caches'
   './Batcher'
   './Driver'

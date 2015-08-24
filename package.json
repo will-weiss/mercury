@@ -17,15 +17,15 @@
   },
   "homepage": "https://github.com/will-weiss/mercury",
   "dependencies": {
-    "LaterList": "git://github.com/will-weiss/LaterList.git#master",
     "bluebird": "2.9.21",
     "body-parser": "1.9.2",
     "coffee-script": "1.9.0",
     "cookie-parser": "1.3.3",
     "express": "4.10.1",
     "express-session": "1.9.1",
-    "graphql": "0.1.6",
-    "i": "^0.3.3",
+    "graphql": "0.4.2",
+    "i": "0.3.3",
+    "laterlist": "~1.0.1",
     "lodash": "3.9.3",
     "mongoose": "4.0.6"
   },
