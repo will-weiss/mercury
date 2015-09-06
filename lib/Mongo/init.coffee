@@ -26,37 +26,41 @@ module.exports = ->
   {schema} = @MongooseModel
   {models} = @app
 
-
   # From a document field, obtain a corresponding GraphQL field. Return
   # undefined if the document field has no valid GraphQL type.
-  getGraphQLField = (docField, name) =>
-    type = getGraphQLType(docField, name)
-    if type then toGraphQLField(type, name)
+  getGraphQLField = (queryable, docField, name) ->
+    type = getGraphQLType(queryable, docField, name)
+    if type
+      queryable.addField(name, type)
+      queryable.addInputField(name, type)
 
   # Create a GraphQLObjectType for a subdocument.
-  getGraphQLObjectType = (subDoc, name) =>
-    fields = _.mapValues subDoc, (field, path) =>
-      getGraphQLField(field, "#{name}.#{path}")
-    new GraphQLObjectType({name: "#{appearsAsSingular}.#{name}", fields})
+  getSubQueryable = (queryable, subDoc, name) ->
+    subQueryable = new Queryable("#{appearsAsSingular}.#{name}")
+    _.mapValues subDoc, (field, path) ->
+      getGraphQLField(subQueryable, field, "#{name}.#{path}")
+    queryable.addField(name, subQueryable.objectType)
+    queryable.addInputField(name, subQueryable.inputObjectType)
+    return
 
   # Add a link between the model and its referrant model.
-  addLink = (name, ref, nested) =>
+  addLink = (queryable, name, ref, nested) ->
     type = if nested then idListType else GraphQLID
-    @fieldsOfDoc[name] = toGraphQLField(type, name)
+    queryable.addInputField(name, type)
 
     refModel = models[ref]
     # TODO throw if referrant model cannot be found?
     if refModel
       # Arrays of ids refer to siblings. Single id's refer to parents.
       LinkCtor = if nested then Link.Sibling else Link.ParentChild
-      new LinkCtor(@, refModel, name)
+      new LinkCtor(thisModel, refModel, name)
 
     # Return no type. Fields have already been added by the Link constructor
     # when there is a referrant model.
     return
 
   # Recursively determine the GraphQL type of a document field.
-  getGraphQLType = (docField, name, nested) =>
+  getGraphQLType = (queryable, docField, name, nested) ->
     # The doc field must exist to have a GraphQL type.
     return unless docField?
     # Alias the referrant and type of the docField.
@@ -66,7 +70,7 @@ module.exports = ->
       # If the field refers to another model, the objectType of that model is
       # the GraphQL type.
       when ref
-        addLink(name, ref, nested)
+        addLink(queryable, name, ref, nested)
 
       # If the docField or its 'type' attribute is a function, the corresponding
       # GraphQL type of that path is given by the type map. Note, that some
@@ -83,12 +87,12 @@ module.exports = ->
       # type given by the first element of the array.
       # i.e., [String] -> new GraphQLList(GraphQLString)
       when _.isArray(docField)
-        new GraphQLList(getGraphQLType(docField[0], name, true))
+        new GraphQLList(getGraphQLType(queryable, docField[0], name, true))
 
       # If the document field is a subdocument, a corresponding
       # GraphQLObjectType is created.
       when _.isObject(docField)
-        getGraphQLObjectType(docField, name)
+        getSubQueryable(queryable, docField, name)
 
       # Throw if the type could not be interpreted.
       else
@@ -97,6 +101,9 @@ module.exports = ->
 
   # For each field in the tree of the schema, add a GraphQL field to the model
   # for all those document fields that correspond with GraphQL types.
-  _.forEach schema.tree, (docField, name) =>
-    return @addField(name, GraphQLID) if name is 'id'
-    getGraphQLField(docField, name)
+  _.forEach schema.tree, (docField, name) ->
+    if name is 'id'
+      thisModel.addField(name, GraphQLID)
+      thisModel.addInputField(name, GraphQLID)
+    else
+      getGraphQLField(thisModel, docField, name)

@@ -17,9 +17,6 @@ class Model extends Queryable
     @appearsAsSingular ||= _.camelCase(@name)
     @appearsAsPlural ||= pluralize(@appearsAsSingular)
 
-    @listType = new graphql.GraphQLList(@objectType)
-    @inputListType = new graphql.GraphQLList(@inputObjectType)
-
     # Relationships between other models of the app are maintained.
     @relationships = {child: {}, parent: {}, sibling: {}}
 

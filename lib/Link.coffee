@@ -30,17 +30,19 @@ class ParentChildRelationship
 
     # Add a field to the child corresponding to the parent which resolves by
     # finding the parent of a supplied instance of a child.
-    child.fields[parent.appearsAsSingular] =
+    child.addField(parent.appearsAsSingular, {
       resolve: @findParent
       description: parent.name
       type: parent.objectType
+    })
 
     # Add a field to the parent corresponding to the child which resolves by
     # finding the children of a supplied instance of a parent.
-    parent.fields[child.appearsAsPlural] =
+    parent.addField(child.appearsAsPlural, {
       resolve: @findChildren.bind(@)
       description: child.name
       type: child.listType
+    })
 
   # Find children from an instance of a parent by getting the ids of prior
   # parent instances, then querying to find the child instances with a
@@ -98,10 +100,11 @@ class ParentChildRelationship
 class SiblingLink
   constructor: (@from, @to, @refKey) ->
     @from.relationships.sibling[@to.name] = @
-    @from.fields[@to.appearsAsPlural] =
+    @from.addField(@to.appearsAsPlural, {
       resolve: @findSiblings.bind(@)
       description: @to.name
       type: @to.listType
+    })
 
   # Find siblings by getting their ids from the supplied instance and finding
   # each by id.
