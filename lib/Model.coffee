@@ -1,4 +1,4 @@
-{_, i, utils, graphql, Queryable} = require('./dependencies')
+{_, i, utils, Queryable} = require('./dependencies')
 
 {pluralize} = i()
 

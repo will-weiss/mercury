@@ -1,11 +1,7 @@
-{_, graphql} = require('./dependencies')
+{_, graphql, utils} = require('./dependencies')
 
-{ GraphQLNonNull, GraphQLString, GraphQLObjectType, GraphQLSchema
-, GraphQLBoolean, GraphQLList, GraphQLID } = graphql
-
-idType = new GraphQLNonNull(GraphQLID)
-fieldListType = new GraphQLList(GraphQLString)
-
+{ GraphQLNonNull, GraphQLString, GraphQLObjectType
+, GraphQLSchema, GraphQLBoolean, GraphQLID } = graphql
 
 class GraphQLField
   constructor: (@name) ->
@@ -21,7 +17,7 @@ class ReadField extends GraphQLField
 
     @args.id =
       description: "id of the #{name} to find"
-      type: idType
+      type: utils.getNonNullType(GraphQLID)
 
     @resolve = (root, {id}) -> model.findById(id)
 
@@ -51,13 +47,13 @@ class UpdateField extends MutationField
     super model
     @args.id =
       description: "id of the #{name} to update"
-      type: idType
+      type: utils.getNonNullType(GraphQLID)
     @args.set =
       description: "Updates to a #{name} document"
       type: new GraphQLNonNull(model.inputObjectType)
     @args.unset =
       description: "Keys of the #{name} document to unset"
-      type: fieldListType
+      type: utils.getListType(GraphQLString)
 
     @type = model.objectType
 
@@ -75,7 +71,7 @@ class RemoveField extends MutationField
     super model
     @args.id =
       description: "id of the #{name} to remove"
-      type: idType
+      type: utils.getNonNullType(GraphQLID)
     @type = GraphQLBoolean
 
     @resolve = (root, {id}) -> model.remove(id)
@@ -100,6 +96,5 @@ operationCtors =
 module.exports = (models) ->
   _.chain(operationCtors)
     .mapValues(createOperationObjectType.bind(null, models))
-    .thru (obj) ->
-      new GraphQLSchema(obj)
+    .thru (obj) -> new GraphQLSchema(obj)
     .value()

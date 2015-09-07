@@ -8,6 +8,7 @@ dependencyList = [
   'bluebird::Promise'
   'body-parser::bodyParser'
   'cookie-parser::cookieParser'
+  'debug'
   'express'
   'express-session::expressSession'
   'fs'

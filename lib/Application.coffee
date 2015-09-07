@@ -1,13 +1,16 @@
-{ _, bodyParser, cookieParser, express, expressSession, graphql, LaterList
-, defaults, buildModels, Driver, Caches, createSchema } = require('./dependencies')
+{ _, bodyParser, cookieParser, debug, express
+, expressSession, graphql , LaterList, defaults
+, buildModels, Driver, Caches, createSchema } = require('./dependencies')
 
 class Application
+
   constructor: (@opts={}) ->
     _.defaults(@opts, defaults.application)
     @express = express()
     @drivers = []
     @caches = new Caches()
     @models = {}
+    @schema = null
 
   addDriver: (type, opts) ->
     driver = new Driver.drivers[type](@, opts)
@@ -22,22 +25,20 @@ class Application
 
   startServer: ->
     new Promise (resolve, reject) =>
-      @express.listen @opts.port, (err) =>
+      @express.listen @opts.port, (err) ->
         if err then reject(err) else resolve()
 
   addSchema: ->
-    schema = createSchema(@models)
+    @schema = createSchema(@models)
+    respond = graphql.graphql.bind(graphql, @schema)
     @express.get @opts.route, (req, res) ->
-      graphql.graphql(schema, req.query.query, req)
-      .then (result) =>
-        res.status(200).send(result)
-      .catch (err) =>
-        console.log(err)
-        res.status(500).send(err)
+      respond(req.query.query, req)
+        .then (result) -> res.status(200).send(result)
+        .catch (err) -> res.status(500).send(err)
 
   run: ->
     LaterList.Relay.from(@drivers)
-      .forEach (driver) => driver.connect()
+      .forEach (driver) -> driver.connect()
       .then =>
         @configure()
         buildModels(@models)
