@@ -1,6 +1,6 @@
 { _, bodyParser, cookieParser, debug, express
-, expressSession, graphql , LaterList, defaults
-, buildModels, Driver, Caches, createSchema } = require('./dependencies')
+, expressSession, graphql, defaults, buildModels
+, Driver, Caches, createSchema } = require('./dependencies')
 
 class Application
 
@@ -37,13 +37,11 @@ class Application
         .catch (err) -> res.status(500).send(err)
 
   run: ->
-    LaterList.Relay.from(@drivers)
-      .forEach (driver) -> driver.connect()
-      .then =>
-        @configure()
-        buildModels(@models)
-        @addSchema()
-        @startServer()
+    Promise.all(driver.connect() for driver in @drivers).then =>
+      @configure()
+      buildModels(@models)
+      @addSchema()
+      @startServer()
 
 
 module.exports = Application

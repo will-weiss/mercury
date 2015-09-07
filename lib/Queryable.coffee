@@ -1,4 +1,4 @@
-{_, graphql, utils} = require('./dependencies')
+{_, utils, graphql} = require('./dependencies')
 
 {GraphQLObjectType, GraphQLInputObjectType} = graphql
 

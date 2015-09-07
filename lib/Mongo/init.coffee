@@ -13,8 +13,7 @@ typeMap =
   String: GraphQLString
   Date: GraphQLString
   ObjectID: GraphQLID
-  Mixed: GraphQLString
-  Array: GraphQLString
+
 
 # Interprets a schema field, adding the appropriate GraphQL typed fields to
 # the queryable entity of a supplied initializer.
@@ -47,7 +46,7 @@ class FieldInterpreter
       when ref
         refModel = model.app.models[ref]
         unless refModel
-          @typeErr("The schema refers to an unknown model '#{ref}'.")
+          return @typeErr("The schema refers to an unknown model '#{ref}'.")
         # Arrays of ids refer to siblings. Single id's refer to parents.
         LinkCtor = if nested then Link.Sibling else Link.ParentChild
         new LinkCtor(model, refModel, @dotPath)
