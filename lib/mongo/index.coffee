@@ -1,38 +1,25 @@
-{mongoose, Promise, Driver} = require('../dependencies')
+{mongoose, Promise, Driver, Application} = require('../dependencies')
 
 class MongoDriver extends Driver
+  type: 'Mongo'
   Model: require('./Model')
+  defaults:
+    ownMongoose: true
 
-  constructor: (app, opts) ->
-    super app, opts
-    @schemas = {}
-    @mongoose = new mongoose.Mongoose()
+  constructor: (app, name, opts) ->
+    super app, name, opts
+    @mongoose = if @opts.ownMongoose then new mongoose.Mongoose() else mongoose
     Promise.promisifyAll(@mongoose.Model)
     Promise.promisifyAll(@mongoose.Model.prototype)
-    @connection = null
-    @connected = Promise.pending()
 
-  connect: ->
-    conn = @connection = @mongoose.createConnection(@connectionString)
+  createConnection: ->
+    conn = @mongoose.createConnection(@opts.connectionString)
 
     conn.on 'connected', =>
-      for name, model of @models
-        model.MongooseModel = conn.model(name, @schemas[name])
-      @onConnectionSuccess()
-      @connected.resolve()
+      @connected.resolve(conn)
 
     conn.on 'error', (err) =>
-      @onConnectionError(err)
       @connected.reject(err)
 
-    conn.on('close', @onConnectionClose.bind(@))
 
-    @connected.promise
-
-  model: (name, schema, opts) ->
-    model = super name, opts
-    @schemas[name] = schema
-    model
-
-
-module.exports = Driver.drivers.Mongo = MongoDriver
+Application.includeDriver(MongoDriver)

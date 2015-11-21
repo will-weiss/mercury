@@ -96,5 +96,7 @@ operationCtors =
 module.exports = (models) ->
   _.chain(operationCtors)
     .mapValues(createOperationObjectType.bind(null, models))
-    .thru (obj) -> new GraphQLSchema(obj)
+    .thru (obj) ->
+      global.attemptedSchema = obj
+      new GraphQLSchema(obj)
     .value()

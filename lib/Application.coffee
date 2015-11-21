@@ -1,27 +1,41 @@
-{ _, bodyParser, cookieParser, debug, express
-, expressSession, graphql, defaults, buildModels
-, Driver, Caches, createSchema } = require('./dependencies')
+{ _, graphqlHTTP, session, bodyParser, cookieParser, express, graphql
+, buildModels, createSchema, utils, Caches } = require('./dependencies')
+
 
 class Application
+  defaults =
+    fileLimit: '50mb'
+    maxCookieAge: 60000
+    port: 8000
+    route: '/mercury'
+    secret: 'random'
+    verbose: true
 
   constructor: (@opts={}) ->
-    _.defaults(@opts, defaults.application)
+    _.defaults(@opts, defaults)
     @express = express()
     @drivers = []
     @caches = new Caches()
     @models = {}
     @schema = null
 
-  addDriver: (type, opts) ->
-    driver = new Driver.drivers[type](@, opts)
-    @drivers.push(driver)
-    driver
+    for type of Application.drivers
+      continue unless type of @opts
+      for driverOpts in [].concat(@opts[type])
+        @addDriver(type, driverOpts)
+
+  use: ->
+    @express.use.apply(@express, arguments)
+
+  set: ->
+    @express.set.apply(@express, arguments)
 
   configure: ->
-    @express.set('port', @opts.port)
-    @express.use(bodyParser.json())
-    @express.use(bodyParser.urlencoded({extended:true, limit: @opts.fileLimit}))
-    @express.use(cookieParser())
+    @set('port', @opts.port)
+    @use(bodyParser.json())
+    @use(bodyParser.urlencoded({extended: true, limit: @opts.fileLimit}))
+    @use(cookieParser())
+    @use(session({secret: @opts.secret, cookie: {maxAge: @opts.maxCookieAge}}))
 
   startServer: ->
     new Promise (resolve, reject) =>
@@ -29,12 +43,10 @@ class Application
         if err then reject(err) else resolve()
 
   addSchema: ->
-    @schema = createSchema(@models)
-    respond = graphql.graphql.bind(graphql, @schema)
-    @express.get @opts.route, (req, res) ->
-      respond(req.query.query, req)
-        .then (result) -> res.status(200).send(result)
-        .catch (err) -> res.status(500).send(err)
+    @schema = schema = createSchema(@models)
+    @express.use @opts.route, graphqlHTTP (request) ->
+      schema: schema
+      rootValue: request.session
 
   run: ->
     Promise.all(driver.connect() for driver in @drivers).then =>
@@ -43,5 +55,27 @@ class Application
       @addSchema()
       @startServer()
 
+  addDriver: (type, name, opts) ->
+    DriverCtor = Application.drivers[type]
+    driver = new DriverCtor(@, name, opts)
+    @drivers.push(driver)
+    driver
+
+# Keep a map of available driver constructors.
+Application.drivers = {}
+
+# Include a driver constructor, enabling drivers of that type to be added to
+# applications.
+Application.includeDriver = (DriverCtor) ->
+  # Check the implementation of the driver constructor.
+  utils.checkImplementation(DriverCtor)
+  # Get the type of driver.
+  type = DriverCtor::type
+  # Add the driver constructor by type.
+  Application.drivers[type] = DriverCtor
+
+  # Add to an application's prototype a function for adding this type of driver.
+  Application::["add#{type}Driver"] = (name, opts) ->
+    @addDriver(type, name, opts)
 
 module.exports = Application

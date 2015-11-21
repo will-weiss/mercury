@@ -46,7 +46,8 @@ class FieldInterpreter
       when ref
         refModel = model.app.models[ref]
         unless refModel
-          return @typeErr("The schema refers to an unknown model '#{ref}'.")
+          @typeErr("The schema refers to an unknown model '#{ref}'.")
+
         # Arrays of ids refer to siblings. Single id's refer to parents.
         LinkCtor = if nested then Link.Sibling else Link.ParentChild
         new LinkCtor(model, refModel, @dotPath)
@@ -78,7 +79,8 @@ class FieldInterpreter
       # If the schema field is a subschema, get the object type of the
       # subschema.
       when _.isObject(schemaField)
-        subQueryable = new Queryable("#{model.appearsAsSingular}.#{@dotPath}")
+        subQueryableName = _.snakeCase("#{model.appearsAsSingular}_#{@dotPath}")
+        subQueryable = new Queryable(subQueryableName)
         new Initializer(model, subQueryable, @path, schemaField)
         # The input object type of the sub queryable entity is set on the field
         # interpreter.

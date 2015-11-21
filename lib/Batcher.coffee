@@ -1,17 +1,17 @@
 {utils, Promise} = require('./dependencies')
 
 # A query which maintains ids to fetch and the deferred promises of each. Runs
-# after a timer has expired.
+# on the next tick of the event loop, after the ids have been collected.
 class Query
-  constructor: (@batcher) ->
+  constructor: ->
     @ids = []
     @deferreds = {}
-    setTimeout(@run.bind(@), @batcher.wait)
+    process.nextTick(@run.bind(@))
 
   # Resolve a single result by resolving and deleting the reference to its
   # corresponding deferred promise.
-  resolveOne: (result) ->
-    id = @batcher.Model.getId(result)
+  onData: (result) ->
+    id = @Model.getId(result)
     deferred = @deferreds[id]
     delete @deferreds[id]
     deferred.resolve(result)
@@ -21,7 +21,7 @@ class Query
   # Reject all deferred promises with any error.
   run: ->
     @batcher.query = null
-    @batcher.getList.call(@, @ids)
+    @Model.findByIds(@ids, @onData.bind(@))
       .then        => deferred.resolve()   for id, deferred of @deferreds
       .catch (err) => deferred.reject(err) for id, deferred of @deferreds
 
@@ -34,18 +34,19 @@ class Query
     @deferreds[id].promise
 
 
-# Batches findById requests for a model. Returns promises for individual
-# requests. A query is run to fetch batched ids after a timer has expired.
+# Batches findById requests for a model querying the collected ids as a unit
+# while resolving the requests individually.
 class Batcher
-  constructor: (@Model, @wait = 0) ->
+  constructor: (Model) ->
+    class @Query extends Query
+    @Query::batcher = @
+    @Query::Model = Model
     @query = null
 
   # Creates a query if one does not already exist. The id is added to the query.
   by: (id) ->
-    @query ?= new Query(@)
+    @query ?= new @Query()
     @query.by(id)
 
-# The prototype of a Batcher must implement a getList function.
-utils.mustImplement(Batcher, 'getList')
 
 module.exports = Batcher

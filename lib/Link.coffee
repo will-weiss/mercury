@@ -1,6 +1,5 @@
 {_} = require('./dependencies')
 
-
 # Link a parent and child. Maintain the key by which instances of the child
 # refer to the id of their corresponding parent instance.
 class ParentChildLink
@@ -87,6 +86,7 @@ class ParentChildRelationship
     existingLen = @child.relationships.parent[ancestorName]?.links?.length
     return if links.length >= existingLen
     new ParentChildRelationship(@child, parent, links)
+
 
 # Link a model with its sibling. A sibling relationship consists of a single
 # link, so this functions as a sibling relationship. A field is added which

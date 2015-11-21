@@ -9,7 +9,8 @@ dependencyList = [
   'body-parser::bodyParser'
   'cookie-parser::cookieParser'
   'express'
-  'express-session::expressSession'
+  'express-graphql::graphqlHTTP'
+  'express-session::session'
   'fs'
   'graphql'
   'i'
@@ -17,28 +18,21 @@ dependencyList = [
   'mongoose'
 
   # mercury
-  './defaults'
   './utils'
   './Queryable'
   './Caches'
   './Batcher'
-  './Driver'
   './createSchema'
   './Link'
   './buildModels'
   './Model'
-  './Mongo'
+  './Driver'
   './Application'
+  './Mongo'
 ]
 
-# Load a dependency
-loadOne = (dependency) ->
+# Load dependencies.
+dependencyList.forEach (dependency) ->
   [loc, name] = dependency.split('::')
-  name ?= loc.split('/').pop()
+  name ||= loc.split('/').pop()
   dependencies[name] = require(loc)
-
-# Load all dependencies
-dependencies.load = ->
-  delete dependencies.load
-  dependencyList.forEach(loadOne)
-  return dependencies
